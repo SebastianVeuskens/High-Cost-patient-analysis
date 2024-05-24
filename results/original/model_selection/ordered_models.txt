@@ -1,0 +1,56 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+[1] "gradient boosting machine" "random forest"            
+[3] "logistic regression"       "neural network"           
+
+[[2]]
+[[2]]$`gradient boosting machine`
+     measures    values     lower     upper
+1    accuracy 0.7776413 0.7739534 0.7813292
+2 sensitivity 0.7947434 0.7911615 0.7983254
+3 specificity 0.7767586 0.7730655 0.7804517
+4       gmean 0.7856996 0.7820604 0.7893387
+5         auc 0.8634525 0.8489417 0.8779634
+
+[[2]]$`random forest`
+     measures    values     lower     upper
+1    accuracy 0.7832924 0.7796385 0.7869463
+2 sensitivity 0.7759700 0.7722722 0.7796677
+3 specificity 0.7836703 0.7800187 0.7873219
+4       gmean 0.7798106 0.7761357 0.7834856
+5         auc 0.8596003 0.8456166 0.8735839
+
+[[2]]$`logistic regression`
+     measures    values     lower     upper
+1    accuracy 0.8243857 0.8210113 0.8277602
+2 sensitivity 0.7133917 0.7093815 0.7174020
+3 specificity 0.8301143 0.8267838 0.8334448
+4       gmean 0.7695432 0.7658083 0.7732780
+5         auc 0.8480405 0.8331506 0.8629303
+
+[[2]]$`neural network`
+     measures    values     lower     upper
+1    accuracy 0.7249386 0.7209783 0.7288989
+2 sensitivity 0.5093867 0.5049532 0.5138203
+3 specificity 0.7360636 0.7321545 0.7399726
+4       gmean 0.6123243 0.6080033 0.6166453
+5         auc 0.6259696 0.6008965 0.6510427
+
+
+[[3]]
+[[3]]$`gradient boosting machine`
+     ntrees   max_depth         auc 
+250.0000000   3.0000000   0.8663408 
+
+[[3]]$`random forest`
+      ntrees       mtries          auc 
+1000.0000000   30.0000000    0.8661343 
+
+[[3]]$`logistic regression`
+NULL
+
+[[3]]$`neural network`
+         activation              hidden                rate                 auc 
+"MaxoutWithDropout"                "10"             "0.003" "0.810238409682171" 
+
+

@@ -1,0 +1,16 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+[1] "gradient boosting machine"
+
+[[2]]
+     measures    values     lower     upper
+1    accuracy 0.7776413 0.7739534 0.7813292
+2 sensitivity 0.7947434 0.7911615 0.7983254
+3 specificity 0.7767586 0.7730655 0.7804517
+4       gmean 0.7856996 0.7820604 0.7893387
+5         auc 0.8634525 0.8489417 0.8779634
+
+[[3]]
+     ntrees   max_depth         auc 
+250.0000000   3.0000000   0.8663408 
+
