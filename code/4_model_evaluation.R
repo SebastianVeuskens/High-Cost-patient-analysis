@@ -68,12 +68,12 @@ test <- as.h2o(test)
 if (is.null(user_model_name)) {
     model_params <- list.load(paste0('results/', relative_dir, 'model_selection/best_model.RData'))
 } else {
-    all_model_params <- list.load(paste0('results/', relative_dir, 'model_selection/ordered_models.RData'))
+    ordered_models <- list.load(paste0('results/', relative_dir, 'model_selection/ordered_models.RData'))
     # Select the model as specified by the user. 
-    # First, identify the index of the specified model in the all_model_params object.
-    model_ind <- which(all_model_params[[1]] == user_model_name) 
-    # Second, extract the model at the index model_ind from the all_model_params object that contains all model parameters. 
-    model_params <- lapply(all_model_params, function(model) {model[[model_ind]]})
+    # First, identify the index of the specified model in the ordered_models object.
+    model_ind <- which(ordered_models[['names']] == user_model_name) 
+    # Second, extract the model at the index model_ind from the ordered_models object that contains all model parameters. 
+    model_params <- lapply(ordered_models, function(model) {model[[model_ind]]})
 }
 
 #### CREATE FOLDER STRUCTURE ####

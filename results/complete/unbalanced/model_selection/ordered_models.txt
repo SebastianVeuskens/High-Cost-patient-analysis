@@ -1,0 +1,102 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+[1] "gradient boosting machine" "random forest"            
+[3] "logistic regression"       "neural network"           
+
+[[2]]
+[[2]]$`gradient boosting machine`
+     measures    values     lower     upper
+1    accuracy 0.7789926 0.7753128 0.7826725
+2 sensitivity 0.7922403 0.7886422 0.7958384
+3 specificity 0.7783089 0.7746250 0.7819928
+4       gmean 0.7852437 0.7816017 0.7888857
+5         auc 0.8616161 0.8467928 0.8764395
+
+[[2]]$`random forest`
+     measures    values     lower     upper
+1    accuracy 0.7867936 0.7831612 0.7904260
+2 sensitivity 0.7534418 0.7496193 0.7572643
+3 specificity 0.7885150 0.7848933 0.7921366
+4       gmean 0.7707789 0.7670511 0.7745067
+5         auc 0.8572770 0.8433450 0.8712090
+
+[[2]]$`logistic regression`
+     measures    values     lower     upper
+1    accuracy 0.8273342 0.8239822 0.8306862
+2 sensitivity 0.7083855 0.7043546 0.7124164
+3 specificity 0.8334733 0.8301692 0.8367774
+4       gmean 0.7683882 0.7646468 0.7721295
+5         auc 0.8475695 0.8326394 0.8624996
+
+[[2]]$`neural network`
+     measures    values     lower     upper
+1    accuracy 0.8437961 0.8405763 0.8470158
+2 sensitivity 0.4868586 0.4824258 0.4912914
+3 specificity 0.8622182 0.8591614 0.8652750
+4       gmean 0.6479030 0.6436671 0.6521389
+5         auc 0.6832111 0.6596650 0.7067572
+
+
+[[3]]
+[[3]]$`gradient boosting machine`
+     ntrees   max_depth         auc 
+250.0000000   3.0000000   0.8661377 
+
+[[3]]$`random forest`
+     ntrees      mtries         auc 
+1000.000000   30.000000    0.866479 
+
+[[3]]$`logistic regression`
+NULL
+
+[[3]]$`neural network`
+         activation              hidden                 auc 
+"MaxoutWithDropout"                "10" "0.810537120586061" 
+
+
+[[4]]
+[[4]]$`gradient boosting machine`
+  predict        p0          p1
+1       0 0.9915600 0.008439999
+2       0 0.9915600 0.008439999
+3       0 0.9870778 0.012922238
+4       0 0.9915600 0.008439999
+5       0 0.9915600 0.008439999
+6       0 0.9915600 0.008439999
+
+[16280 rows x 3 columns] 
+
+[[4]]$`random forest`
+  predict        p0          p1
+1       0 0.9929035 0.007096512
+2       0 0.9929574 0.007042650
+3       0 0.9846929 0.015307131
+4       0 0.9929574 0.007042650
+5       0 0.9934956 0.006504400
+6       0 0.9929574 0.007042650
+
+[16280 rows x 3 columns] 
+
+[[4]]$`logistic regression`
+  predict        p0          p1
+1       0 0.9905178 0.009482223
+2       0 0.9922214 0.007778559
+3       0 0.9809330 0.019066966
+4       0 0.9920800 0.007919983
+5       0 0.9905560 0.009444032
+6       0 0.9920800 0.007919983
+
+[16280 rows x 3 columns] 
+
+[[4]]$`neural network`
+  predict        p0          p1
+1       0 0.9978719 0.002128120
+2       0 0.9981890 0.001810986
+3       0 0.9919342 0.008065818
+4       0 0.9981756 0.001824400
+5       0 0.9949209 0.005079110
+6       0 0.9981756 0.001824400
+
+[16280 rows x 3 columns] 
+
+

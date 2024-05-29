@@ -16,7 +16,7 @@ setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- TRUE 
+balance_hc <- FALSE 
 # Number of folds to be used for cross-validation 
 nfolds <- 5 
 # The measure to order the models by, default is the area under the curve (AUC)

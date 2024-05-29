@@ -17,13 +17,15 @@ setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- TRUE 
+balance_hc <- FALSE 
 # The training dataset is split into train and validate. Validate is used to compare different hyperparameters 
 proportion_train <- 0.75
 # The years that are used for training the models
 year_training <- c(2019, 2020)
 #The year that is used to test the models 
 year_test <- c(2021)
+# Columns to exclude from data sets
+exclude_cols <- c('year', 'ID')
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 #### MODIFY END ####
@@ -72,6 +74,13 @@ sample_indices <- sample(seq_len(nrow(train_validate)), size=sample_size)
 train <- train_validate[sample_indices, ]
 validate <- train_validate[-sample_indices, ]
 test <- data[data$year %in% year_test, ]
+
+# Exclude year and ID column 
+exclude_indices <- which(names(data) %in% exclude_cols)
+train_validate <- train_validate[,-exclude_indices]
+train <- train[,-exclude_indices]
+validate <- validate[,-exclude_indices]
+test <- test[,-exclude_indices]
 
 # Overview over samples per each dataset 
 dim(data)

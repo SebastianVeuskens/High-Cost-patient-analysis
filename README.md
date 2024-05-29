@@ -1,6 +1,8 @@
 ## DATA SOURCE 
 **File:** HC_Patient_Data.csv
 
+# Purpose
+
 # Structure
 ## Code
 | FILE | DESCRIPTION |
@@ -21,6 +23,7 @@ For threshold definition, the F1-score is used.
 
 ## Reproduction
 In each R-file in the *code* folder is a section called **MODIFY**. Inside that section, feel free to change the values of the variables to adapt them to your needs. However, do NOT change anything outside that section except you know what you are doing.  
+If you for example change the parameter *filter_hc* to TRUE. This will remove all the..... You have to run 1-4 and change it in all of the files. 
 
 ## TODO
 Figure out why my training auc is lower than my test/evaluation auc. 

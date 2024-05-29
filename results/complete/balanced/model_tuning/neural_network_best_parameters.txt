@@ -1,0 +1,9 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+        activation             hidden               rate                auc 
+ "TanhWithDropout"               "20"            "0.003" "0.84482451572982" 
+
+[[2]]
+         activation              hidden                rate                 auc 
+"MaxoutWithDropout"                "20"             "0.003" "0.832534370333478" 
+

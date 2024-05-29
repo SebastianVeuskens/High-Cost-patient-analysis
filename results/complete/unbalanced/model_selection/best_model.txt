@@ -1,0 +1,27 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+[1] "gradient boosting machine"
+
+[[2]]
+     measures    values     lower     upper
+1    accuracy 0.7789926 0.7753128 0.7826725
+2 sensitivity 0.7922403 0.7886422 0.7958384
+3 specificity 0.7783089 0.7746250 0.7819928
+4       gmean 0.7852437 0.7816017 0.7888857
+5         auc 0.8616161 0.8467928 0.8764395
+
+[[3]]
+     ntrees   max_depth         auc 
+250.0000000   3.0000000   0.8661377 
+
+[[4]]
+  predict        p0          p1
+1       0 0.9915600 0.008439999
+2       0 0.9915600 0.008439999
+3       0 0.9870778 0.012922238
+4       0 0.9915600 0.008439999
+5       0 0.9915600 0.008439999
+6       0 0.9915600 0.008439999
+
+[16280 rows x 3 columns] 
+

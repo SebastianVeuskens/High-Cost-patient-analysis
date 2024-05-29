@@ -1,10 +1,60 @@
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
+################################################
+#### EXPLORATORY DATA ANALYSIS #################
+################################################
+# File: eda.R
+# Author: Sebastian Benno Veuskens 
+# Date: 2024-05-24
+# Data: 
+#
+# 
+# 
 
-data <- read.csv('data/HC_Patient_Data.csv')
+#### MODIFY ####
+# Your working directory 
+setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
+# Indicates whether to include High-Cost patients from the last year into analysis 
+filter_hc <- FALSE 
+# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
+balance_hc <- TRUE 
+# Number of the best models to save in the best parameters folder 
+num_models <- 2 
+#### MODIFY END ####
 
-data <- data[, colSums(data != 0) > 0]
+#######################
+#### PRELIMINARIES ####
+#######################
+
+#### LIBRARIES & SOURCES ####
+
+# INSTALL LIBRARIES 
+
+# LOAD LIBRARIES & SOURCES
+source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
+
+#### LOAD DATA ####
+
+# Indicate from which relative location to load & save from. Depends on user input. 
+relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
+
+load(paste0('data/', relative_dir, 'train', '.Rdata'))
+load(paste0('data/', relative_dir, 'validate', '.Rdata'))
+load(paste0('data/', relative_dir, 'train_validate', '.Rdata'))
+load(paste0('data/', relative_dir, 'test', '.Rdata'))
+
+# Position of label and variables. Indicate where the features for prediction should start and end in the data.
+label_pos <- 1 
+first_val <- 2
+last_val <- ncol(train)
+
+
+#########################################################################
+################## EXPLORATION ##########################################
+#########################################################################
+data <- train
+
+dim(data)
+str(data)
+data <- data[, colSums(data != 0) > 10]
 
 dim(data[data$year < 2022, ])
 # Print the structure of the dataset
@@ -55,3 +105,26 @@ t.test(Total_Costs ~ HC_Patient, data = data)
 t.test(Inpatient_Num_Diagnoses ~ HC_Patient, data = data)
 t.test(Outpatient_Num_Diagnoses ~ HC_Patient, data = data)
 t.test(Prescription_Num_Prescriptions ~ HC_Patient, data = data)
+
+#######################
+#### TEST FUNCTION ####
+#######################
+# With this function, I can fast & reliably check if data transformation improves performance. 
+
+test_data <- function(train_data, test_data, label_pos, first_val, last_val) {
+    library(h2o)
+    train_data[,label_pos] <- as.factor(train_data[,label_pos]) 
+    test_data[,label_pos] <- as.factor(test_data[,label_pos]) 
+    h2o.init()
+    train_data <- as.h2o(train_data)
+    test_data <- as.h2o(test_data)
+    lr_model <- h2o.glm(x                               = first_val:last_val, 
+                    y                                   = label_pos,
+                    training_frame                      = train_data, 
+                    seed                                = 12345)
+
+    return(evaluate_model(lr_model, '', FALSE, test_data))
+}
+
+test_data(train, train, 1, 2, ncol(data))
+test_data(train, validate, 1, 2, ncol(data))

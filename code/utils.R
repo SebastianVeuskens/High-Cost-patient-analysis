@@ -9,9 +9,11 @@
 #### LIBRARIES & SOURCES ####
 
 # INSTALL LIBRARIES 
+# install.packages('cvAUC')
 # install.packages('rlist')
 
 # LOAD LIBRARIES & SOURCES
+library(cvAUC)  # For the Area Under the Curve (AUC) computation
 library(rlist)  # To save inhomogeneous lists and load them again 
 
 # TODO: Check Interal calculation 
@@ -95,7 +97,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, label='HC
     results  <- data.frame(measures, values, lower, upper)
 
     # Save the results 
-    write.csv(results, paste0(filepath, '.csv'))
+    if (overwrite) write.csv(results, paste0(filepath, '.csv'))
 
     # Return the results
     return(results)
@@ -130,8 +132,8 @@ save_list <- function(list, filepath) {
 # @params last_val Column number of last feature 
 # @params label_pos Column number of label 
 train_model <- function(model_params, train, first_val, last_val, label_pos) {
-    name <- model_params[[1]] 
-    params <- model_params[[3]]
+    name <- model_params[['names']] 
+    params <- model_params[['parameters']]
     if (name == 'logistic regression') {
         model <- h2o.glm(x                                   = first_val:last_val, 
                          y                                   = label_pos,

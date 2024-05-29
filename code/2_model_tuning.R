@@ -1,5 +1,5 @@
 ################################################
-#### Determine model hyperparameters ###########
+#### DETERMINE MODEL HYPERPARAMETERS ###########
 ################################################
 # File: 2_model_tuning.R
 # Author: Sebastian Benno Veuskens 
@@ -15,11 +15,11 @@ setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- TRUE 
+balance_hc <- FALSE 
 # Number of folds to be used for cross-validation 
 nfolds <- 5 
 # Number of the best models to save in the best parameters folder 
-num_models <- 2 
+num_models <- 3 
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 
@@ -30,7 +30,7 @@ nn_activation <- c('Tanh', 'TanhWithDropout', 'Rectifier', 'RectifierWithDropout
 nn_rate <-  c(0.003, 0.005, 0.007) 
 # Random forest 
 rf_ntrees <- c(250, 500, 1000) 
-rf_mtries <- c(10, sqrt(last_val - first_val), 20, 30)
+rf_mtries <- c(10, 20, 30)
 # Gradient Boosting Machine 
 gbm_ntrees <- c(250, 500, 1000, 2000)
 gbm_max_depth <- c(1, 3, 5, 10)
