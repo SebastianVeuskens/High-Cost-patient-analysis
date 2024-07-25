@@ -35,7 +35,10 @@ relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balan
 
 set.seed(12345)
 
-data <- read.csv2('data/raw/HC_Patient_Data.csv', header=TRUE, sep=',')
+data_2019 <- read.csv2('data/raw/HC_Patient_Data_19.csv', header=TRUE, sep=',')
+data_2020 <- read.csv2('data/raw/HC_Patient_Data_20.csv', header=TRUE, sep=',')
+data_2021 <- read.csv2('data/raw/HC_Patient_Data_21.csv', header=TRUE, sep=',')
+data <- rbind(data_2019, data_2020, data_2021)
 
 # Make label factor 
 data$HC_Patient_Next_Year <- as.factor(data$HC_Patient_Next_Year)
@@ -46,6 +49,7 @@ if (filter_hc) {
 }
 
 # Balance the data set, if specified
+# TODO: Either delete or adapt this part with data_2019... instead of just data 
 if (balance_hc) {
     # The samples that will be in the final data set 
     samples_included <- c()
