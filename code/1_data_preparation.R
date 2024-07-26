@@ -81,6 +81,10 @@ test <- data[data$year %in% year_test, ]
 
 # Exclude year and ID column 
 exclude_indices <- which(names(data) %in% exclude_cols)
+data_2019 <- data_2019[,-exclude_indices]
+data_2020 <- data_2020[,-exclude_indices]
+data_2021 <- data_2021[,-exclude_indices]
+data <- data[,-exclude_indices]
 train_validate <- train_validate[,-exclude_indices]
 train <- train[,-exclude_indices]
 validate <- validate[,-exclude_indices]
