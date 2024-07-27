@@ -91,7 +91,7 @@ if (overwrite) {
 
 # Position of label and variables. Indicate where the features for prediction should start and end in the data.
 label_pos <- 1 
-first_val <- 2
+first_val <- 3
 last_val <- ncol(train_validate)
 
 # Train the model. Use the train_model function from the utils.R file
