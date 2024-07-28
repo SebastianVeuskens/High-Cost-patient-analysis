@@ -1,13 +1,13 @@
 [1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
 [[1]]
-     ntrees      mtries         auc 
-1000.000000   30.000000    0.866479 
+      ntrees       mtries          auc 
+1000.0000000   30.0000000    0.8745118 
 
 [[2]]
-     ntrees      mtries         auc 
-500.0000000  30.0000000   0.8662263 
+      ntrees       mtries          auc 
+1000.0000000   20.0000000    0.8744998 
 
 [[3]]
-      ntrees       mtries          auc 
-1000.0000000   20.0000000    0.8660147 
+     ntrees      mtries         auc 
+500.0000000  20.0000000   0.8743642 
 

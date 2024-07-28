@@ -1,13 +1,13 @@
 [1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
 [[1]]
      ntrees   max_depth         auc 
-250.0000000   3.0000000   0.8661377 
+250.0000000   3.0000000   0.8750168 
 
 [[2]]
      ntrees   max_depth         auc 
-500.0000000   3.0000000   0.8649532 
+500.0000000   3.0000000   0.8749368 
 
 [[3]]
       ntrees    max_depth          auc 
-2000.0000000    1.0000000    0.8629692 
+2000.0000000    1.0000000    0.8739732 
 
