@@ -11,11 +11,11 @@
 
 #### MODIFY ####
 # Your working directory 
-setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
+setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- TRUE 
+balance_hc <- FALSE 
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
@@ -71,7 +71,7 @@ if (is.null(user_model_name)) {
     ordered_models <- list.load(paste0('results/', relative_dir, 'model_selection/ordered_models.RData'))
     # Select the model as specified by the user. 
     # First, identify the index of the specified model in the ordered_models object.
-    model_ind <- which(ordered_models[['names']] == user_model_name) 
+    model_ind <- which(ordered_models[[1]] == user_model_name) 
     # Second, extract the model at the index model_ind from the ordered_models object that contains all model parameters. 
     model_params <- lapply(ordered_models, function(model) {model[[model_ind]]})
 }

@@ -13,7 +13,7 @@
 
 ### MODIFY ####
 # Your working directory
-setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
+setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
@@ -110,4 +110,13 @@ if (overwrite) {
     save(train,          file=paste0('data/', relative_dir, 'train.Rdata'))
     save(validate,       file=paste0('data/', relative_dir, 'validate.Rdata'))
     save(test,           file=paste0('data/', relative_dir, 'test.Rdata'))
+
+    write.csv(as.data.frame(data_2019),      file=paste0('data/', relative_dir, 'data_2019.csv'), row.names=FALSE)
+    write.csv(as.data.frame(data_2020),      file=paste0('data/', relative_dir, 'data_2020.csv'), row.names=FALSE)
+    write.csv(as.data.frame(data_2021),      file=paste0('data/', relative_dir, 'data_2021.csv'), row.names=FALSE)
+    write.csv(as.data.frame(data),           file=paste0('data/', relative_dir, 'data.csv'), row.names=FALSE)
+    write.csv(as.data.frame(train_validate), file=paste0('data/', relative_dir, 'train_validate.csv'), row.names=FALSE)
+    write.csv(as.data.frame(train),          file=paste0('data/', relative_dir, 'train.csv'), row.names=FALSE)
+    write.csv(as.data.frame(validate),       file=paste0('data/', relative_dir, 'validate.csv'), row.names=FALSE)
+    write.csv(as.data.frame(test),           file=paste0('data/', relative_dir, 'test.csv'), row.names=FALSE)
 } 

@@ -78,7 +78,8 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, label='HC
     gmean            <- gmeans[threshold_index]                       
 
     # Confidence intervals 
-    n <- attr(train, 'nrow')
+    # TODO: Find way to specify n if newdata is NULL 
+    n <- if(is.null(newdata)) NULL else nrow(newdata)
     interval_accuracy    <- confidence_interval(accuracy, n)
     interval_sensitivity <- confidence_interval(sensitivity, n)
     interval_specificity <- confidence_interval(specificity, n)
@@ -132,7 +133,7 @@ save_list <- function(list, filepath) {
 # @params last_val Column number of last feature 
 # @params label_pos Column number of label 
 train_model <- function(model_params, train, first_val, last_val, label_pos) {
-    name <- model_params[['names']] 
+    name <- model_params[[1]] 
     params <- model_params[['parameters']]
     if (name == 'logistic regression') {
         model <- h2o.glm(x                                   = first_val:last_val, 
