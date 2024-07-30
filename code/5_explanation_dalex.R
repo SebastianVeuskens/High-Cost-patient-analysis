@@ -25,6 +25,8 @@ use_h2o <- FALSE
 target <- 'HC_Patient_Next_Year'
 # Variables to exclude 
 excluded <- 'Total_Costs_Next_Year'
+# Whether to use a patient that was predicted positive or negative
+use_pos <- TRUE 
 #### MODIFY END ####
 
 #######################
@@ -69,7 +71,10 @@ relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balan
 load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
 load(paste0('data/', relative_dir, 'test', '.Rdata'))
 
-# Select sample
+train_validate$Sex <- as.factor(train_validate$Sex)
+test$Sex <- as.factor(test$Sex)
+
+# Select sample 
 # TODO: Delete this part later 
 num_samples <- 3000
 train_validate <- train_validate[sample(nrow(train_validate), num_samples),]
@@ -113,12 +118,16 @@ if (use_h2o) {
 #######################
 
 predictors <- setdiff(names(test), c(target, excluded))
-sample <- test[predictors][1,]
+pos_sample <- test[predictors][which(test[target] == 1)[1],]
+neg_sample <- test[predictors][which(test[target] == 0)[1],]
+sample <- if (use_pos) pos_sample else neg_sample
 feature_of_interest <- 'Age'
 
+# TODO: Check later if I want this here 
+train_validate_df <- as.data.frame(train_validate)
+sample_df <- as.data.frame(sample)
+
 if (use_h2o) {
-    train_validate_df <- as.data.frame(train_validate)
-    sample_df <- as.data.frame(sample)
     predict_fn <- function(model, newdata) {
         results <- as.data.frame(h2o.predict(model, as.h2o(newdata)))
         return(results[[3L]])
