@@ -71,7 +71,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
         predictions <- h2o.predict(model, newdata=newdata)
     }
     predictions <- as.data.frame(predictions)
-    a <- predictions
+    n <- nrow(newdata) 
 
     # Compute the important measures with this threshold 
     confusion_matrix <- h2o.confusionMatrix(performance, threshold=threshold)
@@ -80,13 +80,11 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     specificity      <-  as.numeric(h2o.specificity  (performance, threshold)) 
     gmean            <- gmeans[threshold_index]       
 
-
-    idx_cc_pred      <- which(predictions$predict == 1)
-    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
+    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)[1:floor(n * 0.05)]
     cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true,cost_label])  
 
     # Confidence intervals 
-    n <- nrow(newdata)
     interval_accuracy       <- confidence_interval(accuracy, n)
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
