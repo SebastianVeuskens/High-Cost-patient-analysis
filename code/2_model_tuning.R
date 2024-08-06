@@ -11,7 +11,7 @@
 
 #### MODIFY ####
 # Your working directory 
-setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
+setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
@@ -24,6 +24,8 @@ num_models <- 3
 overwrite <- TRUE
 
 ## Specifiy the grid search space
+# Logistic regression
+lr_lambda <- c(0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9)
 # Neural Network
 nn_hidden <- c(10, 20, 100, c(10, 10), c(20, 20), c(100, 100))
 nn_activation <- c('Tanh', 'TanhWithDropout', 'Rectifier', 'RectifierWithDropout', 'Maxout', 'MaxoutWithDropout')
@@ -82,6 +84,51 @@ label_pos <- 1
 first_val <- 3
 last_val <- ncol(train)
 
+#############################
+#### LOGISTIC REGRESSION ####
+#############################
+
+# Measure the time for the whole training & validation process 
+start_time <- Sys.time()
+
+# Assign the parameters to perform a grid search about
+lr_grid_params <- list(lambda=lr_lambda)
+
+# TODO: Change alpha and lambda, make sure specifiy alpha = 1 for lasso regression and then iterate over lambda. 
+# Perform the grid search 
+lr_grid <- h2o.grid('glm',
+                    x = first_val:last_val,
+                    y = label_pos,
+                    grid_id = 'lr_grid',
+                    training_frame = train,
+                    nfolds = nfolds,
+                    seed = 12345,
+                    alpha = 1,                  # LASSO regression 
+                    calc_like = TRUE,
+                    hyper_params = lr_grid_params)
+
+# Show the grid search results, ordered by the corrisponding AUC
+lr_gridperf <- h2o.getGrid(grid_id = 'lr_grid',
+                           sort_by = 'auc',
+                           decreasing = TRUE)
+
+print(lr_gridperf)   
+
+# Save the parameters for the best num_models (default=2) models
+lr_ids         <- lr_gridperf@model_ids
+lr_all_models  <- lapply(lr_ids, function(id) {h2o.getModel(id)})
+lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda = model@parameters$lambda,
+                                                       auc    = model@model$cross_validation_metrics@metrics$AUC,
+                                                       aic    = model@model$cross_validation_metrics@metrics$AIC)})
+
+# Order results by AIC value (increasing)  
+lr_model_order <- order(sapply(lr_all_params, function(x) {x['aic']}))
+lr_best_params <- lr_all_params[lr_model_order][1:num_models]
+
+lr_filepath <- paste0('results/', relative_dir, 'model_tuning/logistic_regression_best_parameters')
+# Use the save_list function from utils.R file 
+if (overwrite) save_list(lr_best_params, lr_filepath)                                                                 
+
 ########################
 #### NEURAL NETWORK ####
 ########################
@@ -111,7 +158,6 @@ nn_gridperf <- h2o.getGrid(grid_id = 'nn_grid',
 
 print(nn_gridperf)  
 
-# TODO: Check why the cross validation auc is bigger than the training auc -> Should be the other way round 
 # Save the parameters for the best num_models (default=2) models
 nn_best_ids         <- nn_gridperf@model_ids[1:num_models]
 nn_best_models      <- lapply(nn_best_ids, function(id) {h2o.getModel(id)})
