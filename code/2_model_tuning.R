@@ -54,7 +54,7 @@ gbm_max_depth <- c(1, 3, 5, 10)
 # LOAD LIBRARIES & SOURCES
 library(h2o)            # The modelling framework 
 library(cvAUC)          # For the Area Under the Curve (AUC) computation
-library(dplyr)         # For the pipe operator
+library(dplyr)          # For the pipe operator
 source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
 
 #### LOAD DATA ####
@@ -138,14 +138,20 @@ lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train)
 # Likelihood-ratio test 
 ndiff_fbpval <- length(lr_full_model@parameters$x)-length(lr_bpval_best_model@parameters$x)       # Difference of number of variables- degrees of freedom 
 ndiff_fbminn <- length(lr_full_model@parameters$x)-length(lr_bminn_best_model@parameters$x)       # Difference of number of variables- degrees of freedom 
+ndiff_fbminn <- length(lr_bpval_best_model@parameters$x)-length(lr_bminn_best_model@parameters$x)       # Difference of number of variables- degrees of freedom 
 lr_nll_full             <- -2 * h2o.loglikelihood(lr_full_model)
 lr_nll_backward_pval    <- -2 * h2o.loglikelihood(lr_bpval_best_model)
 lr_nll_backward_min_num <- -2 * h2o.loglikelihood(lr_bminn_best_model)
 lr_likelihood_ratio_fbpval <- pchisq(lr_nll_backward_pval    - lr_nll_full, ndiff_fbpval, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 lr_likelihood_ratio_fbminn <- pchisq(lr_nll_backward_min_num - lr_nll_full, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
-print('P-value of full model and backward p-value model: ', lr_likelihood_ratio_fbpval)
-print('P-value of full model and backward minimum number of predictors model: ', lr_likelihood_ratio_fbminn)
-
+lr_likelihood_ratio_bpval_bminn <- pchisq(lr_nll_backward_min_num - lr_nll_backward_pval, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
+print('P-value of full model and backward p-value model: ', round(lr_likelihood_ratio_fbpval, 3))
+print('P-value of full model and backward minimum number of predictors model: ', round(lr_likelihood_ratio_fbminn, 3))
+if (setdiff(lr_bminn_idx, lr_bpval_idx) == NULL) {
+    print('P-value of backward p-value model and backward minimum number of predictors model: ', round(lr_likelihood_ratio_fbminn, 3))
+} else {
+    warning('WARNING: NOT NESTED MODELS USED IN LIKELIHOOD-RATIO TEST!') 
+}
 # Save the parameters for the best num_models (default=2) models
 lr_all_models  <- c(lr_full_model, lr_bpval_best, lr_binn_best)
 lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda       = model@parameters$lambda,
