@@ -25,7 +25,8 @@ overwrite <- TRUE
 
 ## Specifiy the grid search space
 # Logistic regression
-lr_lambda <- c(0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9)
+lr_sig_level <- 0.05
+lr_min_pred_num <- 10
 # Neural Network
 nn_hidden <- c(10, 20, 100, c(10, 10), c(20, 20), c(100, 100))
 nn_activation <- c('Tanh', 'TanhWithDropout', 'Rectifier', 'RectifierWithDropout', 'Maxout', 'MaxoutWithDropout')
@@ -47,11 +48,13 @@ gbm_max_depth <- c(1, 3, 5, 10)
 # INSTALL LIBRARIES 
 # install.packages('h2o')
 # install.packages('cvAUC')
+# install.packages(dplyr)
 # install.packages('rlist')
 
 # LOAD LIBRARIES & SOURCES
 library(h2o)            # The modelling framework 
 library(cvAUC)          # For the Area Under the Curve (AUC) computation
+library(dplyr)         # For the pipe operator
 source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
 
 #### LOAD DATA ####
@@ -91,35 +94,50 @@ last_val <- ncol(train)
 # Measure the time for the whole training & validation process 
 start_time <- Sys.time()
 
-# Assign the parameters to perform a grid search about
-lr_grid_params <- list(lambda=lr_lambda)
+# Fit the full logistic regression model on all variables. Remove collinear columns for p-value estimation 
+lr_full_model <- h2o.glm(x                  = first_val:last_val, 
+                         y                  = label_pos,
+                         training_frame     = train,  
+                         nfolds             = nfolds,
+                         seed               = 12345,
+                         calc_like          = TRUE 
+                         )
 
-# TODO: Change alpha and lambda, make sure specifiy alpha = 1 for lasso regression and then iterate over lambda. 
-# Perform the grid search 
-lr_grid <- h2o.grid('glm',
-                    x = first_val:last_val,
-                    y = label_pos,
-                    grid_id = 'lr_grid',
-                    training_frame = train,
-                    nfolds = nfolds,
-                    seed = 12345,
-                    alpha = 1,                  # LASSO regression 
-                    calc_like = TRUE,
-                    hyper_params = lr_grid_params)
+# Perform backward variable selection
+# Stopping criterion: All variable p-values are below significance level 
+lr_backward_pval_model <- h2o.modelSelection(x = first_val:last_val,
+                                             y = label_pos,
+                                             training_frame = train,
+                                             seed = 12345,
+                                             mode = 'backward',
+                                             p_values_threshold = lr_sig_level,
+                                             calc_like = TRUE)
+lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names']
+                %>% as.data.frame()[[1]]
+                %>% strsplit(', ')
+                %>% match(colnames(train))
+lr_bpval_best <- train_lr_model(lr_bpval_idx, label_pos, train)
 
-# Show the grid search results, ordered by the corrisponding AUC
-lr_gridperf <- h2o.getGrid(grid_id = 'lr_grid',
-                           sort_by = 'auc',
-                           decreasing = TRUE)
-
-print(lr_gridperf)   
+# Perform backward variable selection
+# Stopping criterion: Only the minimum specified number of predictors is included 
+lr_backward_min_num_model <- h2o.modelSelection(x = first_val:last_val,
+                                                y = label_pos,
+                                                training_frame = train,
+                                                seed = 12345,
+                                                mode = 'backward',
+                                                min_predictor_number = min_pred_num, 
+                                                calc_like = TRUE)                                             
+lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names']
+                %>% as.data.frame()[[1]]
+                %>% strsplit(', ')
+                %>% match(colnames(train))
+lr_bminn_best <- train_lr_model(lr_bminn_idx, label_pos, train)                
 
 # Save the parameters for the best num_models (default=2) models
-lr_ids         <- lr_gridperf@model_ids
-lr_all_models  <- lapply(lr_ids, function(id) {h2o.getModel(id)})
+lr_all_models  <- c(lr_full_model, lr_backward_pval_model, lr_backward_min_num_model)
 lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda = model@parameters$lambda,
-                                                       auc    = model@model$cross_validation_metrics@metrics$AUC,
-                                                       aic    = model@model$cross_validation_metrics@metrics$AIC)})
+                                                           auc    = model@model$cross_validation_metrics@metrics$AUC,
+                                                           aic    = model@model$cross_validation_metrics@metrics$AIC)})
 
 # Order results by AIC value (increasing)  
 lr_model_order <- order(sapply(lr_all_params, function(x) {x['aic']}))
