@@ -1,5 +1,5 @@
 "","models","runtimes_in_minutes"
-"1","logistic regression",0.2248
-"2","neural network",10.1372
-"3","random forest",1.8203
-"4","gradient boosting machine",0.8742
+"1","logistic regression",0.3214
+"2","neural network",30.4817
+"3","random forest",3.6869
+"4","gradient boosting machine",1.8383

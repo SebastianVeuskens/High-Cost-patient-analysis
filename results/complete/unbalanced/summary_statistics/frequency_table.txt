@@ -44,7 +44,7 @@ $`Average outpatient number of diagnoses (years)`
 [1] 28.393
 
 $`Average number of prescriptions (years)`
-[1] 3
+[1] 7.002
 
 $`N = `
 [1] 1716
@@ -91,7 +91,7 @@ $`Average outpatient number of diagnoses (years)`
 [1] 70.423
 
 $`Average number of prescriptions (years)`
-[1] 18
+[1] 23.435
 
 $`N = `
 [1] 32887
@@ -138,7 +138,7 @@ $`Average outpatient number of diagnoses (years)`
 [1] 29.189
 
 $`Average number of prescriptions (years)`
-[1] 3
+[1] 6.795
 
 $`N = `
 [1] 1731
@@ -185,7 +185,7 @@ $`Average outpatient number of diagnoses (years)`
 [1] 75.098
 
 $`Average number of prescriptions (years)`
-[1] 19
+[1] 24.353
 
 $`N = `
 [1] 33573
@@ -232,7 +232,7 @@ $`Average outpatient number of diagnoses (years)`
 [1] 31.17
 
 $`Average number of prescriptions (years)`
-[1] 3
+[1] 6.799
 
 $`N = `
 [1] 1767
@@ -279,5 +279,5 @@ $`Average outpatient number of diagnoses (years)`
 [1] 77.997
 
 $`Average number of prescriptions (years)`
-[1] 20
+[1] 24.58
 

@@ -1,0 +1,151 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+$`N = `
+[1] 34304
+
+$Sex
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var   value     n  prop
+  <chr> <chr> <int> <dbl>
+1 Sex   m     16572  48.3
+2 Sex   w     17732  51.7
+
+$`Age groups`
+# A tibble: 4 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <chr> <int> <dbl>
+1 Age_groups 0-30  11037 32.2 
+2 Age_groups 30-65 17943 52.3 
+3 Age_groups 65-80  4206 12.3 
+4 Age_groups >80    1118  3.26
+
+$`Average age (years)`
+[1] 41.689
+
+$`HC patient in that year`
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <int> <int> <dbl>
+1 HC_Patient     0 32588 95.0 
+2 HC_Patient     1  1716  5.00
+
+$`Average need of care duration`
+[1] 0.11
+
+$`Average DMP duration`
+[1] 0.7
+
+$`Average total costs`
+[1] 1832.991
+
+$`Average inpatient number of diagnoses (years)`
+[1] 0.639
+
+$`Average outpatient number of diagnoses (years)`
+[1] 30.495
+
+$`Average number of prescriptions (years)`
+[1] 7.824
+
+$`N = `
+[1] 34618
+
+$Sex
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var   value     n  prop
+  <chr> <chr> <int> <dbl>
+1 Sex   m     16708  48.3
+2 Sex   w     17910  51.7
+
+$`Age groups`
+# A tibble: 4 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <chr> <int> <dbl>
+1 Age_groups 0-30  10994 31.8 
+2 Age_groups 30-65 18083 52.2 
+3 Age_groups 65-80  4293 12.4 
+4 Age_groups >80    1248  3.61
+
+$`Average age (years)`
+[1] 41.972
+
+$`HC patient in that year`
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <int> <int> <dbl>
+1 HC_Patient     0 32887 95.0 
+2 HC_Patient     1  1731  5.00
+
+$`Average need of care duration`
+[1] 0.132
+
+$`Average DMP duration`
+[1] 0.764
+
+$`Average total costs`
+[1] 1861.365
+
+$`Average inpatient number of diagnoses (years)`
+[1] 0.555
+
+$`Average outpatient number of diagnoses (years)`
+[1] 31.485
+
+$`Average number of prescriptions (years)`
+[1] 7.673
+
+$`N = `
+[1] 35340
+
+$Sex
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var   value     n  prop
+  <chr> <chr> <int> <dbl>
+1 Sex   m     17071  48.3
+2 Sex   w     18269  51.7
+
+$`Age groups`
+# A tibble: 4 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <chr> <int> <dbl>
+1 Age_groups 0-30  11192 31.7 
+2 Age_groups 30-65 18415 52.1 
+3 Age_groups 65-80  4439 12.6 
+4 Age_groups >80    1294  3.66
+
+$`Average age (years)`
+[1] 42.074
+
+$`HC patient in that year`
+# A tibble: 2 × 4
+# Groups:   var [1]
+  var        value     n  prop
+  <chr>      <int> <int> <dbl>
+1 HC_Patient     0 33573    95
+2 HC_Patient     1  1767     5
+
+$`Average need of care duration`
+[1] 0.151
+
+$`Average DMP duration`
+[1] 0.817
+
+$`Average total costs`
+[1] 1918.828
+
+$`Average inpatient number of diagnoses (years)`
+[1] 0.563
+
+$`Average outpatient number of diagnoses (years)`
+[1] 33.511
+
+$`Average number of prescriptions (years)`
+[1] 7.688
+

@@ -3,12 +3,13 @@
 [1] "gradient boosting machine"
 
 [[2]]
-     measures    values     lower     upper
-1    accuracy 0.7969358 0.7934678 0.8004037
-2 sensitivity 0.7969838 0.7935161 0.8004514
-3 specificity 0.7969332 0.7934653 0.8004012
-4       gmean 0.7969585 0.7934907 0.8004263
-5         auc 0.8758387 0.8629766 0.8887008
+      measures     values      lower      upper
+1     accuracy  0.7969358  0.7909293  0.8029423
+2  sensitivity  0.7969838  0.7909778  0.8029897
+3  specificity  0.7969332  0.7909267  0.8029398
+4        gmean  0.7969585  0.7909522  0.8029647
+5          auc  0.8758387  0.8629766  0.8887008
+6 cost_capture 60.0043261 59.2728660 60.7357862
 
 [[3]]
      ntrees   max_depth         auc 

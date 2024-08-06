@@ -1,0 +1,13 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+[[1]]
+      lambda          auc          aic 
+2.000000e-03 8.698873e-01 1.486610e+04 
+
+[[2]]
+      lambda          auc          aic 
+5.000000e-03 8.689225e-01 1.490914e+04 
+
+[[3]]
+      lambda          auc          aic 
+1.000000e-03 8.671508e-01 1.512906e+04 
+
