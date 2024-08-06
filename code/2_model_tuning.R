@@ -113,9 +113,8 @@ lr_backward_pval_model <- h2o.modelSelection(x                          = first_
                                              p_values_threshold         = lr_sig_level,
                                              remove_collinear_columns   = TRUE)
 lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names'] %>% 
-                as.data.frame() %>% 
-                unlist()        %>% 
                 strsplit(', ')  %>% 
+                unlist()        %>% 
                 match(colnames(train))
 lr_bpval_best <- train_lr_model(lr_bpval_idx, label_pos, train)
 
@@ -126,20 +125,31 @@ lr_backward_min_num_model <- h2o.modelSelection(x                           = fi
                                                 training_frame              = train,
                                                 seed                        = 12345,
                                                 mode                        = 'backward',
-                                                min_predictor_number        = min_pred_num, 
+                                                min_predictor_number        = lr_min_pred_num, 
                                                 remove_collinear_columns    = TRUE)                                             
-lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>% 
-                as.data.frame() %>% 
-                unlist()        %>% 
+lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>%
                 strsplit(', ')  %>% 
+                unlist()        %>% 
                 match(colnames(train))
 lr_bminn_best <- train_lr_model(lr_bminn_idx, label_pos, train)                
 
+# Likelihood-ratio test 
+ndiff_fbpval <- length(glm_full$coefficients)-length(glm_reduced$coefficients)       # Difference of number of variables- degrees of freedom 
+ndiff_fbminn <- length(glm_full$coefficients)-length(glm_reduced$coefficients)       # Difference of number of variables- degrees of freedom 
+lr_nll_full             <- -2 * h2o.negative_log_likelihood(lr_full_model)
+lr_nll_backward_pval    <- -2 * h2o.negative_log_likelihood(lr_backward_pval_model)
+lr_nll_backward_min_num <- -2 * h2o.negative_log_likelihood(lr_backward_min_num_model)
+lr_likelihood_ratio_fbpval <- pchisq(lr_nll_backward_pval    - lr_nll_full, ndiff_fbpval, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
+lr_likelihood_ratio_fbminn <- pchisq(lr_nll_backward_min_num - lr_nll_full, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
+print('P-value of full model and backward p-value model: ', lr_likelihood_ratio_fbpval)
+print('P-value of full model and backward minimum number of predictors model: ', lr_likelihood_ratio_fbminn)
+
 # Save the parameters for the best num_models (default=2) models
 lr_all_models  <- c(lr_full_model, lr_bpval_best, lr_binn_best)
-lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda = model@parameters$lambda,
-                                                           auc    = model@model$cross_validation_metrics@metrics$AUC,
-                                                           aic    = model@model$cross_validation_metrics@metrics$AIC)})
+lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda       = model@parameters$lambda,
+                                                           predictors   = model@parameters$x,
+                                                           auc          = model@model$cross_validation_metrics@metrics$AUC,
+                                                           aic          = model@model$cross_validation_metrics@metrics$AIC)})
 
 # Order results by AIC value (increasing)  
 lr_model_order <- order(sapply(lr_all_params, function(x) {x['aic']}))
