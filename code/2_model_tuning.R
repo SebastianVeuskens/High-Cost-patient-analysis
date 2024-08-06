@@ -101,7 +101,7 @@ lr_full_model <- h2o.glm(x                        = first_val:last_val,
                          nfolds                   = nfolds,
                          seed                     = 12345,
                          remove_collinear_columns = TRUE,
-                         generate_scoring_history = TRUE
+                         calc_like                = TRUE 
                          )
 
 # Perform backward variable selection
@@ -138,9 +138,9 @@ lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train)
 # Likelihood-ratio test 
 ndiff_fbpval <- length(lr_full_model@parameters$x)-length(lr_bpval_best_model@parameters$x)       # Difference of number of variables- degrees of freedom 
 ndiff_fbminn <- length(lr_full_model@parameters$x)-length(lr_bminn_best_model@parameters$x)       # Difference of number of variables- degrees of freedom 
-lr_nll_full             <- -2 * h2o.negative_log_likelihood(lr_full_model)
-lr_nll_backward_pval    <- -2 * h2o.negative_log_likelihood(lr_bpval_best_model)
-lr_nll_backward_min_num <- -2 * h2o.negative_log_likelihood(lr_bminn_best_model)
+lr_nll_full             <- -2 * h2o.loglikelihood(lr_full_model)
+lr_nll_backward_pval    <- -2 * h2o.loglikelihood(lr_bpval_best_model)
+lr_nll_backward_min_num <- -2 * h2o.loglikelihood(lr_bminn_best_model)
 lr_likelihood_ratio_fbpval <- pchisq(lr_nll_backward_pval    - lr_nll_full, ndiff_fbpval, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 lr_likelihood_ratio_fbminn <- pchisq(lr_nll_backward_min_num - lr_nll_full, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 print('P-value of full model and backward p-value model: ', lr_likelihood_ratio_fbpval)
