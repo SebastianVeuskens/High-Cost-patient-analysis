@@ -196,10 +196,12 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
 # @params indices A list of indices to include as predictors. 
 # @params label_pos The index of the outcome or label (response variable)
 # @params train_data Data set used for training.
-train_lr_model <- function(indices, label_pos, train_data) {
+# @nfolds Number of folds for cross validation metrics 
+train_lr_model <- function(indices, label_pos, train_data, nfolds) {
     return(h2o.glm(x                  = indices,
                    y                  = label_pos,
                    training_frame     = train_data,  
+                   nfolds             = nfolds,
                    seed               = 12345,
                    calc_like          = TRUE
                    )

@@ -117,7 +117,7 @@ lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names'] %>%
                 strsplit(', ')  %>% 
                 unlist()        %>% 
                 match(colnames(train))
-lr_bpval_best_model <- train_lr_model(lr_bpval_idx, label_pos, train)
+lr_bpval_best_model <- train_lr_model(lr_bpval_idx, label_pos, train, nfolds=nfolds)
 
 # Perform backward variable selection
 # Stopping criterion: Only the minimum specified number of predictors is     included 
@@ -133,7 +133,7 @@ lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>%
                 strsplit(', ')  %>% 
                 unlist()        %>% 
                 match(colnames(train))
-lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train)                
+lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train, nfolds=nfolds)                
 
 # Likelihood-ratio test 
 ndiff_fbpval <- length(lr_full_model@parameters$x)-length(lr_bpval_best_model@parameters$x)      
@@ -155,8 +155,7 @@ if (length(setdiff(lr_bminn_idx, lr_bpval_idx)) == 0) {
 
 # Save the parameters for the best num_models (default=2) models
 lr_all_models  <- c(lr_full_model, lr_bpval_best_model, lr_bminn_best_model)
-lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda       = model@parameters$lambda,
-                                                           predictors   = do.call(paste, c(as.list(model@parameters$x), sep=', ')),
+lr_all_params  <- lapply(lr_all_models, function(model) {c(predictors   = do.call(paste, c(as.list(model@parameters$x), sep=', ')),
                                                            auc          = model@model$cross_validation_metrics@metrics$AUC,
                                                            aic          = model@model$cross_validation_metrics@metrics$AIC)})
 

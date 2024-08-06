@@ -81,93 +81,21 @@ last_val <- ncol(train)
 # Measure the time for the whole training & validation process 
 start_time <- Sys.time()
 
-# TODO: Delete if I do not perform Lasso regression 
 # Load the best parameters
-# lr_filename <- 'logistic_regression_best_parameters.RData'
-# lr_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', lr_filename))
-# lr_best <- lr_params[1]
+lr_filename <- 'logistic_regression_best_parameters.RData'
+lr_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', lr_filename))
+lr_best <- lr_params[[1]]
 
-# TODO: This full and reduced model selection/comparison should be moved to model tuning (since I do not use LASSO)
-## Train the full model
-lr_full_model <- h2o.glm(x                  = first_val:last_val, 
-                         y                  = label_pos,
-                         training_frame     = train,  
-                         nfolds             = nfolds,
-                         seed               = 12345,
-                         compute_p_values   = TRUE,
-                         remove_collinear_columns = TRUE
-                         )
+lr_indices <- match(strsplit(lr_best[['predictors']], ', ')[[1]], colnames(train))
 
-get_significant_indices <- function(coef_table, column_names, sig_level=0.05) {
-    pvals <- coef_table$p_value 
-    pvals[is.na(pvals)] <- 1
-
-    significant_columns <- coef_table[pvals < sig_level,]
-    # Intercept is not a column name, therefore exclude it from matching 
-    significant_indices <- match(significant_columns$names[-1], column_names)
-    return(significant_indices)
-}
-
-reduce_indices_by_one <- function(coef_table, column_names, sig_level=0.05) {
-    pvals <- coef_table$p_value 
-    pvals[is.na(pvals)] <- 1
-
-    if (all(pvals < sig_level)) {return(match(coef_table$names[-1], column_names))}
-    excluded_column <- which.max(pvals)
-    # Intercept is not a column name, therefore exclude it from matching 
-    reduced_indices <- match(coef_table$names[c(-1, -excluded_column)], column_names)
-    return(reduced_indices)
-}
-
-train_lr_model <- function(indices) {
-    return(h2o.glm(x                  = indices,
-                   y                  = label_pos,
-                   training_frame     = train,  
-                   nfolds             = nfolds,
-                   seed               = 12345,
-                   compute_p_values   = TRUE,
-                   remove_collinear_columns = TRUE
-                   )
-    )
-}
-
-cur_model <- lr_full_model 
-cur_sig_idx <- colnames(train)
-new_sig_idx <- reduce_indices_by_one(cur_model@model$coefficients_table, colnames(train))
-while(length(cur_sig_idx) > length(new_sig_idx)) {
-    cur_model <- train_lr_model(new_sig_idx) 
-    cur_sig_idx <- new_sig_idx
-    new_sig_idx <- reduce_indices_by_one(cur_model@model$coefficients_table, colnames(train))
-    print(paste0('Current number of variables selected: ', length(cur_sig_idx)))
-}
-
-cur_model <- lr_full_model 
-cur_sig_idx <- colnames(train)
-new_sig_idx <- get_significant_indices(cur_model@model$coefficients_table, colnames(train))
-while(length(cur_sig_idx) > length(new_sig_idx)) {
-    cur_model <- train_lr_model(new_sig_idx) 
-    cur_sig_idx <- new_sig_idx
-    new_sig_idx <- get_significant_indices(cur_model@model$coefficients_table, colnames(train))
-    print(paste0('Current number of variables selected: ', length(cur_sig_idx)))
-}
-
-lr_reduced_idx <- new_sig_idx
-
-## Train the reduced model
-lr_reduced_model <- h2o.glm(x                   = lr_reduced_idx, 
-                            y                   = label_pos,
-                            training_frame      = train, 
-                            nfolds              = nfolds,
-                            seed                = 12345,
-                            compute_p_values    = TRUE)
-
-lr_full_model_aic <- lr_full_model@model$cross_validation_metrics@metrics$AIC
-lr_reduced_model_aic <- lr_reduced_model@model$cross_validation_metrics@metrics$AIC
-lr_full_model_aic
-lr_reduced_model_aic
-
-evaluate_model(lr_full_model, '', FALSE, newdata=validate)
-evaluate_model(lr_reduced_model, '', FALSE, newdata=validate)
+## Train the model
+lr_model <- h2o.glm(x              = lr_indices, 
+                    y              = label_pos,
+                    training_frame = train,  
+                    nfolds         = nfolds,
+                    seed           = 12345,
+                    calc_like      = TRUE
+                    )
 
 ## Evaluate the trained model
 lr_filepath <- paste0('results/', relative_dir, 'model_selection/logistic_regression')
@@ -192,7 +120,7 @@ start_time <- Sys.time()
 # Load the best parameters
 nn_filename <- 'neural_network_best_parameters.RData'
 nn_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', nn_filename))
-nn_best <- nn_params[1]
+nn_best <- nn_params[[1]]
 
 ## Train the model
 nn_model <- h2o.deeplearning(x              = first_val:last_val, 
@@ -200,9 +128,9 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
                              training_frame = train, 
                              nfolds         = nfolds,
                              seed           = 12345,
-                             activation     = nn_best$activation,
-                             hidden         = nn_best$hidden,
-                             rate           = nn_best$rate)
+                             activation     = nn_best[['activation']],
+                             hidden         = nn_best[['hidden']],
+                             rate           = nn_best[['rate']])
 
 ## Evaluate the trained model
 nn_filepath <- paste0('results/', relative_dir, 'model_selection/neural_network')
@@ -227,7 +155,7 @@ start_time <- Sys.time()
 # Load the best parameters
 rf_filename <- 'random_forest_best_parameters.RData'
 rf_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', rf_filename))
-rf_best <- rf_params[1]
+rf_best <- rf_params[[1]]
 
 ## Train the model
 rf_model <- h2o.randomForest(x              = first_val:last_val, 
@@ -235,8 +163,8 @@ rf_model <- h2o.randomForest(x              = first_val:last_val,
                              training_frame = train, 
                              nfolds         = nfolds,
                              seed           = 12345,
-                             ntrees         = rf_best$ntrees,
-                             mtries         = rf_best$mtries)
+                             ntrees         = rf_best[['ntrees']],
+                             mtries         = rf_best[['mtries']])
 
 # Evaluate the trained model
 rf_filepath <- paste0('results/', relative_dir, 'model_selection/random_forest')
@@ -261,7 +189,7 @@ start_time <- Sys.time()
 # Load the best parameters
 gbm_filename <- 'gradient_boosting_machine_best_parameters.RData'
 gbm_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', gbm_filename))
-gbm_best <- gbm_params[1]
+gbm_best <- gbm_params[[1]]
 
 # Train the model
 gbm_model <- h2o.gbm(x              = first_val:last_val, 
@@ -269,8 +197,8 @@ gbm_model <- h2o.gbm(x              = first_val:last_val,
                      training_frame = train, 
                      nfolds         = nfolds,
                      seed           = 12345,
-                     ntrees         = gbm_best$ntrees,
-                     max_depth      = gbm_best$max_depth)
+                     ntrees         = gbm_best[['ntrees']],
+                     max_depth      = gbm_best[['max_depth']])
 
 # Evaluate the trained model
 gbm_filepath <- paste0('results/', relative_dir, 'model_selection/gradient_boosting_machine')
