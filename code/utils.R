@@ -201,7 +201,8 @@ train_lr_model <- function(indices, label_pos, train_data) {
                    y                  = label_pos,
                    training_frame     = train_data,  
                    seed               = 12345,
-                   calc_like          = TRUE
+                   calc_like          = TRUE,
+                   generate_scoring_history = TRUE
                    )
     )
 }
