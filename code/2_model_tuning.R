@@ -116,7 +116,7 @@ lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names'] %>%
                 strsplit(', ')  %>% 
                 unlist()        %>% 
                 match(colnames(train))
-lr_bpval_best <- train_lr_model(lr_bpval_idx, label_pos, train)
+lr_bpval_best_model <- train_lr_model(lr_bpval_idx, label_pos, train)
 
 # Perform backward variable selection
 # Stopping criterion: Only the minimum specified number of predictors is     included 
@@ -125,20 +125,21 @@ lr_backward_min_num_model <- h2o.modelSelection(x                           = fi
                                                 training_frame              = train,
                                                 seed                        = 12345,
                                                 mode                        = 'backward',
-                                                min_predictor_number        = lr_min_pred_num, 
+                                                # TODO: Check why the number of variables reduces so much
+                                                min_predictor_number        = lr_min_pred_num + 7, 
                                                 remove_collinear_columns    = TRUE)                                             
 lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>%
                 strsplit(', ')  %>% 
                 unlist()        %>% 
                 match(colnames(train))
-lr_bminn_best <- train_lr_model(lr_bminn_idx, label_pos, train)                
+lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train)                
 
 # Likelihood-ratio test 
-ndiff_fbpval <- length(glm_full$coefficients)-length(glm_reduced$coefficients)       # Difference of number of variables- degrees of freedom 
-ndiff_fbminn <- length(glm_full$coefficients)-length(glm_reduced$coefficients)       # Difference of number of variables- degrees of freedom 
+ndiff_fbpval <- length(lr_full_model$parameters$x)-length(lr_bpval_best_model$parameters$x)       # Difference of number of variables- degrees of freedom 
+ndiff_fbminn <- length(lr_full_model$parameters$x)-length(lr_bminn_best_model$parameters$x)       # Difference of number of variables- degrees of freedom 
 lr_nll_full             <- -2 * h2o.negative_log_likelihood(lr_full_model)
-lr_nll_backward_pval    <- -2 * h2o.negative_log_likelihood(lr_backward_pval_model)
-lr_nll_backward_min_num <- -2 * h2o.negative_log_likelihood(lr_backward_min_num_model)
+lr_nll_backward_pval    <- -2 * h2o.negative_log_likelihood(lr_bpval_best_model)
+lr_nll_backward_min_num <- -2 * h2o.negative_log_likelihood(lr_bminn_best_model)
 lr_likelihood_ratio_fbpval <- pchisq(lr_nll_backward_pval    - lr_nll_full, ndiff_fbpval, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 lr_likelihood_ratio_fbminn <- pchisq(lr_nll_backward_min_num - lr_nll_full, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 print('P-value of full model and backward p-value model: ', lr_likelihood_ratio_fbpval)
