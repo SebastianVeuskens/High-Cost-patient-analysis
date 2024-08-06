@@ -9,10 +9,12 @@
 #### LIBRARIES & SOURCES ####
 
 # INSTALL LIBRARIES 
+# install.packages('h2o')
 # install.packages('cvAUC')
 # install.packages('rlist')
 
 # LOAD LIBRARIES & SOURCES
+library(h2o)    # The modelling framework 
 library(cvAUC)  # For the Area Under the Curve (AUC) computation
 library(rlist)  # To save inhomogeneous lists and load them again 
 
@@ -80,6 +82,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     specificity      <-  as.numeric(h2o.specificity  (performance, threshold)) 
     gmean            <- gmeans[threshold_index]       
 
+    # TODO: Check if floor is really appropriate here (changes results only very slightly)
     idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
     idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)[1:floor(n * 0.05)]
     cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true,cost_label])  
