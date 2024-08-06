@@ -95,46 +95,48 @@ last_val <- ncol(train)
 start_time <- Sys.time()
 
 # Fit the full logistic regression model on all variables. Remove collinear columns for p-value estimation 
-lr_full_model <- h2o.glm(x                  = first_val:last_val, 
-                         y                  = label_pos,
-                         training_frame     = train,  
-                         nfolds             = nfolds,
-                         seed               = 12345,
-                         calc_like          = TRUE 
+lr_full_model <- h2o.glm(x                        = first_val:last_val, 
+                         y                        = label_pos,
+                         training_frame           = train,  
+                         nfolds                   = nfolds,
+                         seed                     = 12345,
+                         remove_collinear_columns = TRUE 
                          )
 
 # Perform backward variable selection
 # Stopping criterion: All variable p-values are below significance level 
-lr_backward_pval_model <- h2o.modelSelection(x = first_val:last_val,
-                                             y = label_pos,
-                                             training_frame = train,
-                                             seed = 12345,
-                                             mode = 'backward',
-                                             p_values_threshold = lr_sig_level,
-                                             calc_like = TRUE)
-lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names']
-                %>% as.data.frame()[[1]]
-                %>% strsplit(', ')
-                %>% match(colnames(train))
+lr_backward_pval_model <- h2o.modelSelection(x                          = first_val:last_val,
+                                             y                          = label_pos,
+                                             training_frame             = train,
+                                             seed                       = 12345,
+                                             mode                       = 'backward',
+                                             p_values_threshold         = lr_sig_level,
+                                             remove_collinear_columns   = TRUE)
+lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names'] %>% 
+                as.data.frame() %>% 
+                unlist()        %>% 
+                strsplit(', ')  %>% 
+                match(colnames(train))
 lr_bpval_best <- train_lr_model(lr_bpval_idx, label_pos, train)
 
 # Perform backward variable selection
-# Stopping criterion: Only the minimum specified number of predictors is included 
-lr_backward_min_num_model <- h2o.modelSelection(x = first_val:last_val,
-                                                y = label_pos,
-                                                training_frame = train,
-                                                seed = 12345,
-                                                mode = 'backward',
-                                                min_predictor_number = min_pred_num, 
-                                                calc_like = TRUE)                                             
-lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names']
-                %>% as.data.frame()[[1]]
-                %>% strsplit(', ')
-                %>% match(colnames(train))
+# Stopping criterion: Only the minimum specified number of predictors is     included 
+lr_backward_min_num_model <- h2o.modelSelection(x                           = first_val:last_val,
+                                                y                           = label_pos,
+                                                training_frame              = train,
+                                                seed                        = 12345,
+                                                mode                        = 'backward',
+                                                min_predictor_number        = min_pred_num, 
+                                                remove_collinear_columns    = TRUE)                                             
+lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>% 
+                as.data.frame() %>% 
+                unlist()        %>% 
+                strsplit(', ')  %>% 
+                match(colnames(train))
 lr_bminn_best <- train_lr_model(lr_bminn_idx, label_pos, train)                
 
 # Save the parameters for the best num_models (default=2) models
-lr_all_models  <- c(lr_full_model, lr_backward_pval_model, lr_backward_min_num_model)
+lr_all_models  <- c(lr_full_model, lr_bpval_best, lr_binn_best)
 lr_all_params  <- lapply(lr_all_models, function(model) {c(lambda = model@parameters$lambda,
                                                            auc    = model@model$cross_validation_metrics@metrics$AUC,
                                                            aic    = model@model$cross_validation_metrics@metrics$AIC)})
@@ -182,6 +184,7 @@ nn_best_models      <- lapply(nn_best_ids, function(id) {h2o.getModel(id)})
 nn_best_params      <- lapply(nn_best_models, function(model) {c(activation = model@parameters$activation,
                                                                  hidden     = model@parameters$hidden,
                                                                  rate       = model@parameters$rate,
+                                                                 aic        = model@model$cross_validation_metrics@metrics$AIC,
                                                                  auc        = model@model$cross_validation_metrics@metrics$AUC)})
 nn_filepath <- paste0('results/', relative_dir, 'model_tuning/neural_network_best_parameters')
 # Use the save_list function from utils.R file 
@@ -224,6 +227,7 @@ rf_best_ids         <- rf_gridperf@model_ids[1:num_models]
 rf_best_models      <- lapply(rf_best_ids, function(id) {h2o.getModel(id)})
 rf_best_params      <- lapply(rf_best_models, function(model) {c(ntrees = model@parameters$ntrees,
                                                                  mtries = model@parameters$mtries,
+                                                                 aic    = model@model$cross_validation_metrics@metrics$AIC,
                                                                  auc    = model@model$cross_validation_metrics@metrics$AUC)})
 rf_filepath <- paste0('results/', relative_dir, 'model_tuning/random_forest_best_parameters')
 # Use the save_list function from utils.R file 
@@ -266,6 +270,7 @@ gbm_best_ids         <- gbm_gridperf@model_ids[1:num_models]
 gbm_best_models      <- lapply(gbm_best_ids, function(id) {h2o.getModel(id)})
 gbm_best_params      <- lapply(gbm_best_models, function(model) {c(ntrees    = model@parameters$ntrees,
                                                                    max_depth = model@parameters$max_depth,
+                                                                   aic       = model@model$cross_validation_metrics@metrics$AIC,
                                                                    auc       = model@model$cross_validation_metrics@metrics$AUC)})
 gbm_filepath <- paste0('results/', relative_dir, 'model_tuning/gradient_boosting_machine_best_parameters')
 # Use the save_list function from utils.R file 
