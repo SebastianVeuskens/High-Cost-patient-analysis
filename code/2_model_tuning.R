@@ -204,6 +204,11 @@ nn_best_params      <- lapply(nn_best_models, function(model) {c(activation = mo
                                                                  rate       = model@parameters$rate,
                                                                  aic        = model@model$cross_validation_metrics@metrics$AIC,
                                                                  auc        = model@model$cross_validation_metrics@metrics$AUC)})
+
+# Order results by AIC value (increasing)  
+nn_model_order <- order(sapply(nn_all_params, function(x) {x['aic']}))
+nn_best_params <- nn_all_params[nn_model_order][1:num_models]
+
 nn_filepath <- paste0('results/', relative_dir, 'model_tuning/neural_network_best_parameters')
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(nn_best_params, nn_filepath)
@@ -247,6 +252,11 @@ rf_best_params      <- lapply(rf_best_models, function(model) {c(ntrees = model@
                                                                  mtries = model@parameters$mtries,
                                                                  aic    = model@model$cross_validation_metrics@metrics$AIC,
                                                                  auc    = model@model$cross_validation_metrics@metrics$AUC)})
+
+# Order results by AIC value (increasing)  
+rf_model_order <- order(sapply(rf_all_params, function(x) {x['aic']}))
+rf_best_params <- rf_all_params[rf_model_order][1:num_models]
+
 rf_filepath <- paste0('results/', relative_dir, 'model_tuning/random_forest_best_parameters')
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(rf_best_params, rf_filepath)
@@ -290,6 +300,11 @@ gbm_best_params      <- lapply(gbm_best_models, function(model) {c(ntrees    = m
                                                                    max_depth = model@parameters$max_depth,
                                                                    aic       = model@model$cross_validation_metrics@metrics$AIC,
                                                                    auc       = model@model$cross_validation_metrics@metrics$AUC)})
+
+# Order results by AIC value (increasing)  
+gbm_model_order <- order(sapply(gbm_all_params, function(x) {x['aic']}))
+gbm_best_params <- gbm_all_params[gbm_model_order][1:num_models]
+
 gbm_filepath <- paste0('results/', relative_dir, 'model_tuning/gradient_boosting_machine_best_parameters')
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(gbm_best_params, gbm_filepath)
