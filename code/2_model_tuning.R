@@ -154,14 +154,14 @@ if (length(setdiff(lr_bminn_idx, lr_bpval_idx)) == 0) {
 }
 
 # Save the parameters for the best num_models (default=2) models
-lr_all_models  <- c(lr_full_model, lr_bpval_best_model, lr_bminn_best_model)
-lr_all_params  <- lapply(lr_all_models, function(model) {c(predictors   = do.call(paste, c(as.list(model@parameters$x), sep=', ')),
+lr_best_models  <- c(lr_full_model, lr_bpval_best_model, lr_bminn_best_model)
+lr_best_params  <- lapply(lr_best_models, function(model) {c(predictors   = do.call(paste, c(as.list(model@parameters$x), sep=', ')),
                                                            auc          = model@model$cross_validation_metrics@metrics$AUC,
                                                            aic          = model@model$cross_validation_metrics@metrics$AIC)})
 
 # Order results by AIC value (increasing)  
-lr_model_order <- order(sapply(lr_all_params, function(x) {x['aic']}))
-lr_best_params <- lr_all_params[lr_model_order][1:num_models]
+lr_model_order <- order(sapply(lr_best_params, function(x) {x['aic']}))
+lr_best_params <- lr_best_params[lr_model_order][1:num_models]
 
 lr_filepath <- paste0('results/', relative_dir, 'model_tuning/logistic_regression_best_parameters')
 # Use the save_list function from utils.R file 
@@ -197,7 +197,7 @@ nn_gridperf <- h2o.getGrid(grid_id = 'nn_grid',
 print(nn_gridperf)  
 
 # Save the parameters for the best num_models (default=2) models
-nn_best_ids         <- nn_gridperf@model_ids[1:num_models]
+nn_best_ids         <- nn_gridperf@model_ids
 nn_best_models      <- lapply(nn_best_ids, function(id) {h2o.getModel(id)})
 nn_best_params      <- lapply(nn_best_models, function(model) {c(activation = model@parameters$activation,
                                                                  hidden     = model@parameters$hidden,
@@ -206,8 +206,8 @@ nn_best_params      <- lapply(nn_best_models, function(model) {c(activation = mo
                                                                  auc        = model@model$cross_validation_metrics@metrics$AUC)})
 
 # Order results by AIC value (increasing)  
-nn_model_order <- order(sapply(nn_all_params, function(x) {x['aic']}))
-nn_best_params <- nn_all_params[nn_model_order][1:num_models]
+nn_model_order <- order(sapply(nn_best_params, function(x) {x['aic']}))
+nn_best_params <- nn_best_params[nn_model_order][1:num_models]
 
 nn_filepath <- paste0('results/', relative_dir, 'model_tuning/neural_network_best_parameters')
 # Use the save_list function from utils.R file 
@@ -246,7 +246,7 @@ rf_gridperf <- h2o.getGrid(grid_id = 'rf_grid',
 print(rf_gridperf)
 
 # Save the parameters for the best num_models (default=2) models
-rf_best_ids         <- rf_gridperf@model_ids[1:num_models]
+rf_best_ids         <- rf_gridperf@model_ids
 rf_best_models      <- lapply(rf_best_ids, function(id) {h2o.getModel(id)})
 rf_best_params      <- lapply(rf_best_models, function(model) {c(ntrees = model@parameters$ntrees,
                                                                  mtries = model@parameters$mtries,
@@ -254,8 +254,8 @@ rf_best_params      <- lapply(rf_best_models, function(model) {c(ntrees = model@
                                                                  auc    = model@model$cross_validation_metrics@metrics$AUC)})
 
 # Order results by AIC value (increasing)  
-rf_model_order <- order(sapply(rf_all_params, function(x) {x['aic']}))
-rf_best_params <- rf_all_params[rf_model_order][1:num_models]
+rf_model_order <- order(sapply(rf_best_params, function(x) {x['aic']}))
+rf_best_params <- rf_best_params[rf_model_order][1:num_models]
 
 rf_filepath <- paste0('results/', relative_dir, 'model_tuning/random_forest_best_parameters')
 # Use the save_list function from utils.R file 
@@ -294,7 +294,7 @@ gbm_gridperf <- h2o.getGrid(grid_id = 'gbm_grid',
 print(gbm_gridperf)
 
 # Save the parameters for the best num_models (default=2) models
-gbm_best_ids         <- gbm_gridperf@model_ids[1:num_models]
+gbm_best_ids         <- gbm_gridperf@model_ids
 gbm_best_models      <- lapply(gbm_best_ids, function(id) {h2o.getModel(id)})
 gbm_best_params      <- lapply(gbm_best_models, function(model) {c(ntrees    = model@parameters$ntrees,
                                                                    max_depth = model@parameters$max_depth,
@@ -302,8 +302,8 @@ gbm_best_params      <- lapply(gbm_best_models, function(model) {c(ntrees    = m
                                                                    auc       = model@model$cross_validation_metrics@metrics$AUC)})
 
 # Order results by AIC value (increasing)  
-gbm_model_order <- order(sapply(gbm_all_params, function(x) {x['aic']}))
-gbm_best_params <- gbm_all_params[gbm_model_order][1:num_models]
+gbm_model_order <- order(sapply(gbm_best_params, function(x) {x['aic']}))
+gbm_best_params <- gbm_best_params[gbm_model_order][1:num_models]
 
 gbm_filepath <- paste0('results/', relative_dir, 'model_tuning/gradient_boosting_machine_best_parameters')
 # Use the save_list function from utils.R file 
