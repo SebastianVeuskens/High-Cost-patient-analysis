@@ -77,33 +77,36 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 
     # Compute the important measures with this threshold 
     confusion_matrix <- h2o.confusionMatrix(performance, threshold=threshold)
-    accuracy         <-  as.numeric(h2o.accuracy     (performance, threshold))       
-    sensitivity      <-  as.numeric(h2o.sensitivity  (performance, threshold)) 
-    specificity      <-  as.numeric(h2o.specificity  (performance, threshold)) 
-    gmean            <- gmeans[threshold_index]       
+    aic              <- as.numeric(h2o.aic(performance, threshold)) 
+    accuracy         <-  as.numeric(h2o.accuracy (performance, threshold))       
+    sensitivity      <-  as.numeric(h2o.sensitivity (performance, threshold)) 
+    specificity      <-  as.numeric(h2o.specificity (performance, threshold)) 
+    gmean            <- gmeans[threshold_index]      
 
     # TODO: Check if floor is really appropriate here (changes results only very slightly)
     idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
-    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)[1:floor(n * 0.05)]
-    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true,cost_label])  
+    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
 
     # Confidence intervals 
+    interval_aic            <- confidence_interval(aic, n)
     interval_accuracy       <- confidence_interval(accuracy, n)
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
     interval_gmean          <- confidence_interval(gmean, n)
     interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
 
+    # TODO: Check why I calculated the AUC like this and not with H2O native functions 
     # AUC 
     auc_info     <- compute_auc(predictions, newdata=newdata, label=target_label)
     auc          <- auc_info[['cvAUC']]
     interval_auc <- auc_info[['ci']]
 
     # Combine the results 
-    measures <- c('accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
-    values   <- c(accuracy, sensitivity, specificity, gmean, auc, cost_capture) 
-    lower    <- c(interval_accuracy[1], interval_sensitivity[1], interval_specificity[1], interval_gmean[1], interval_auc[1], interval_cost_capture[1])
-    upper    <- c(interval_accuracy[2], interval_sensitivity[2], interval_specificity[2], interval_gmean[2], interval_auc[2], interval_cost_capture[2])
+    measures <- c('aic', 'accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
+    values   <- c(aic, accuracy, sensitivity, specificity, gmean, auc, cost_capture) 
+    lower    <- c(interval_aic[1], interval_accuracy[1], interval_sensitivity[1], interval_specificity[1], interval_gmean[1], interval_auc[1], interval_cost_capture[1])
+    upper    <- c(interval_aic[2], interval_accuracy[2], interval_sensitivity[2], interval_specificity[2], interval_gmean[2], interval_auc[2], interval_cost_capture[2])
     results  <- data.frame(measures, values, lower, upper)
 
     # Save the results 
@@ -145,7 +148,9 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
     name <- model_params[[1]] 
     params <- model_params[['parameters']]
     if (name == 'logistic regression') {
-        model <- h2o.glm(x                                   = first_val:last_val, 
+        # TODO: Check if this is the right way to index the predictors 
+        indices <- match(strsplit(params[['predictors']], ', ')[[1]], colnames(train))
+        model <- h2o.glm(x                                   = indices, 
                          y                                   = label_pos,
                          training_frame                      = train, 
                          seed                                = 12345)
@@ -206,4 +211,26 @@ train_lr_model <- function(indices, label_pos, train_data, nfolds) {
                    calc_like          = TRUE
                    )
     )
+}
+
+
+# Save the coefficients of a (reduced) logistic regression model 
+#
+# This function saves the coefficients of a logistic regression model.
+# Only the specified indices are included. P-values are reported too. 
+#
+# @params model the logistic regression model that contains the coefficients. 
+# @params filepath The location and name of the file 
+save_lr_coefs <- function(model, filepath) {
+    all_coefs <- h2o.coef_with_p_values(model)
+    sig_coefs <- all_coefs[all_coefs$p_value < 0.05,]
+    all_num_coefs <- nrow(all_coefs)
+    sig_num_coefs <- nrow(sig_coefs)
+    coefs <- list(
+        'Number of significant coefficients' = sig_num_coefs, 
+        'Number of all coefficients' = all_num_coefs, 
+        'Significant coefficients' = sig_coefs, 
+        'All coefficients' = all_coefs
+    )
+    save_list(coefs, paste0(filepath, '_coefficients'))
 }
