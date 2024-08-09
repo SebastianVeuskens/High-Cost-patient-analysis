@@ -11,7 +11,7 @@
 
 #### MODIFY ####
 # Your working directory 
-setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
+setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
@@ -27,6 +27,7 @@ overwrite <- TRUE
 # Logistic regression
 lr_sig_level <- 0.05
 lr_min_pred_num <- 10
+lr_lambda <- 0.01
 # Neural Network
 nn_hidden <- c(10, 20, 100, c(10, 10), c(20, 20), c(100, 100))
 nn_activation <- c('Tanh', 'TanhWithDropout', 'Rectifier', 'RectifierWithDropout', 'Maxout', 'MaxoutWithDropout')
@@ -119,45 +120,43 @@ lr_bpval_idx <- h2o.result(lr_backward_pval_model)[1,'predictor_names'] %>%
                 match(colnames(train))
 lr_bpval_best_model <- train_lr_model(lr_bpval_idx, label_pos, train, nfolds=nfolds)
 
-# Perform backward variable selection
-# Stopping criterion: Only the minimum specified number of predictors is     included 
-lr_backward_min_num_model <- h2o.modelSelection(x                           = first_val:last_val,
-                                                y                           = label_pos,
-                                                training_frame              = train,
-                                                seed                        = 12345,
-                                                mode                        = 'backward',
-                                                # TODO: Check why the number of variables reduces so much
-                                                min_predictor_number        = lr_min_pred_num + 7, 
-                                                remove_collinear_columns    = TRUE)                                             
-lr_bminn_idx <- h2o.result(lr_backward_min_num_model)[1,'predictor_names'] %>%
-                strsplit(', ')  %>% 
-                unlist()        %>% 
-                match(colnames(train))
-lr_bminn_best_model <- train_lr_model(lr_bminn_idx, label_pos, train, nfolds=nfolds)                
+# Perform LASSO regularization 
+# Optional lambda_search argument automates choice of 'best' lambda 
+lr_lasso_model <- h2o.glm(x                        = first_val:last_val, 
+                          y                        = label_pos,
+                          training_frame           = train,  
+                          nfolds                   = nfolds,
+                          seed                     = 12345,
+                          alpha                    = 1, 
+                          lambda                   = lr_lambda,
+                          calc_like                = TRUE,
+                        #   lambda_search            = TRUE,
+                        #   compute_p_values = TRUE,
+                        #   remove_collinear_columns = TRUE 
+                          )    
+
+lr_lasso_all_coefs <- h2o.coef(lr_lasso_model)
+lr_lasso_pos_coefs <- lr_lasso_all_coefs[lr_lasso_all_coefs > 0]
+lr_lasso_pos_names <- names(lr_lasso_pos_coefs)
+lr_lasso_idx <- match(lr_lasso_pos_names, colnames(train))
+lr_lasso_model@parameters$x <- lr_lasso_pos_names
 
 # Likelihood-ratio test 
 ndiff_fbpval <- length(lr_full_model@parameters$x)-length(lr_bpval_best_model@parameters$x)      
-ndiff_fbminn <- length(lr_full_model@parameters$x)-length(lr_bminn_best_model@parameters$x)      
-ndiff_fbminn <- length(lr_bpval_best_model@parameters$x)-length(lr_bminn_best_model@parameters$x)
+ndiff_flasso <- length(lr_full_model@parameters$x)-length(lr_lasso_pos_coefs)      
 lr_nll_full             <- -2 * h2o.loglikelihood(lr_full_model)
 lr_nll_backward_pval    <- -2 * h2o.loglikelihood(lr_bpval_best_model)
-lr_nll_backward_min_num <- -2 * h2o.loglikelihood(lr_bminn_best_model)
+lr_nll_lasso            <- -2 * h2o.loglikelihood(lr_lasso_model)
 lr_likelihood_ratio_fbpval      <- pchisq(lr_nll_backward_pval    - lr_nll_full, ndiff_fbpval, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
-lr_likelihood_ratio_fbminn      <- pchisq(lr_nll_backward_min_num - lr_nll_full, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
-lr_likelihood_ratio_bpval_bminn <- pchisq(lr_nll_backward_min_num - lr_nll_backward_pval, ndiff_fbminn, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
+lr_likelihood_ratio_flasso      <- pchisq(lr_nll_lasso - lr_nll_full, ndiff_flasso, lower.tail=FALSE)                                      # Chi Square test of: -2 * (log-likelihood of reduced model -log-likelihood of full model)
 print(paste0('P-value of full model and backward p-value model: ', round(lr_likelihood_ratio_fbpval, 3)))
-print(paste0('P-value of full model and backward minimum number of predictors model: ', round(lr_likelihood_ratio_fbminn, 3)))
-if (length(setdiff(lr_bminn_idx, lr_bpval_idx)) == 0) {
-    print(paste0('P-value of backward p-value model and backward minimum number of predictors model: ', round(lr_likelihood_ratio_fbminn, 3)))
-} else {
-    warning('WARNING: NOT NESTED MODELS USED IN LIKELIHOOD-RATIO TEST!') 
-}
+print(paste0('P-value of full model and lasso regularization model: ', round(lr_likelihood_ratio_flasso, 3)))
 
 # Save the parameters for the best num_models (default=2) models
-lr_best_models  <- c(lr_full_model, lr_bpval_best_model, lr_bminn_best_model)
+lr_best_models  <- c(lr_full_model, lr_bpval_best_model, lr_lasso_model)
 lr_best_params  <- lapply(lr_best_models, function(model) {c(predictors   = do.call(paste, c(as.list(model@parameters$x), sep=', ')),
-                                                           auc          = model@model$cross_validation_metrics@metrics$AUC,
-                                                           aic          = model@model$cross_validation_metrics@metrics$AIC)})
+                                                             auc          = model@model$cross_validation_metrics@metrics$AUC,
+                                                             aic          = model@model$cross_validation_metrics@metrics$AIC)})
 
 # Order results by AIC value (increasing)  
 lr_model_order <- order(sapply(lr_best_params, function(x) {x['aic']}))
@@ -165,7 +164,13 @@ lr_best_params <- lr_best_params[lr_model_order][1:num_models]
 
 lr_filepath <- paste0('results/', relative_dir, 'model_tuning/logistic_regression_best_parameters')
 # Use the save_list function from utils.R file 
-if (overwrite) save_list(lr_best_params, lr_filepath)                                                                 
+if (overwrite) save_list(lr_best_params, lr_filepath)   
+
+# Display the runtime 
+end_time <- Sys.time() 
+lr_runtime <- difftime(end_time, start_time, units='mins')
+print(paste0('Runtime logistic regression: ', round(lr_runtime, 2), ' minutes'))
+
 
 ########################
 #### NEURAL NETWORK ####
