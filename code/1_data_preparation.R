@@ -41,6 +41,9 @@ data_2021 <- read.csv2('data/raw/HC_Patient_Data_21.csv', header=TRUE, sep=',')
 data <- rbind(data_2019, data_2020, data_2021)
 
 # Make label factor 
+data_2019$HC_Patient_Next_Year <- as.factor(data_2019$HC_Patient_Next_Year)
+data_2020$HC_Patient_Next_Year <- as.factor(data_2020$C_Patient_Next_Year)
+data_2021$HC_Patient_Next_Year <- as.factor(data_2021$HC_Patient_Next_Year)
 data$HC_Patient_Next_Year <- as.factor(data$HC_Patient_Next_Year)
 
 # Filter out the (past) High-Cost patients, if specified 
