@@ -88,18 +88,22 @@ lr_best <- lr_params[[1]]
 
 lr_indices <- match(strsplit(lr_best[['predictors']], ', ')[[1]], colnames(train))
 
-## Train the model
-lr_model <- h2o.glm(x              = lr_indices, 
-                    y              = label_pos,
-                    training_frame = train,  
-                    nfolds         = nfolds,
-                    seed           = 12345,
-                    calc_like      = TRUE
+# Train the model
+lr_model <- h2o.glm(x                = lr_indices, 
+                    y                = label_pos,
+                    training_frame   = train,  
+                    nfolds           = nfolds,
+                    seed             = 12345,
+                    calc_like        = TRUE,
+                    compute_p_values = TRUE
                     )
 
-## Evaluate the trained model
+# Evaluate the trained model
 lr_filepath <- paste0('results/', relative_dir, 'model_selection/logistic_regression')
 lr_performance <- evaluate_model(lr_model, lr_filepath, overwrite, newdata=validate)
+
+# Save the coefficients of the model 
+save_lr_coefs(lr_model, lr_filepath)
 
 # Get predictions of the model
 lr_predictions <- h2o.predict(lr_model, newdata=validate)
@@ -122,7 +126,7 @@ nn_filename <- 'neural_network_best_parameters.RData'
 nn_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', nn_filename))
 nn_best <- nn_params[[1]]
 
-## Train the model
+# Train the model
 nn_model <- h2o.deeplearning(x              = first_val:last_val, 
                              y              = label_pos,
                              training_frame = train, 
@@ -132,7 +136,7 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
                              hidden         = nn_best[['hidden']],
                              rate           = nn_best[['rate']])
 
-## Evaluate the trained model
+# Evaluate the trained model
 nn_filepath <- paste0('results/', relative_dir, 'model_selection/neural_network')
 nn_performance <- evaluate_model(nn_model, nn_filepath, overwrite, newdata=validate)
 
@@ -157,7 +161,7 @@ rf_filename <- 'random_forest_best_parameters.RData'
 rf_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', rf_filename))
 rf_best <- rf_params[[1]]
 
-## Train the model
+# Train the model
 rf_model <- h2o.randomForest(x              = first_val:last_val, 
                              y              = label_pos,
                              training_frame = train, 
