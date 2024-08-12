@@ -1,7 +1,7 @@
 #########################################
 #### CREATE SIMPLE TEST MODEL ###########
 #########################################
-# File: test_model.R
+# File: 5_explanation_dalex.R
 # Author: Sebastian Benno Veuskens 
 # Date: 2024-07-10
 # Data: Create a small data set with simple relations. 
@@ -11,7 +11,6 @@
 
 #### MODIFY ####
 # Your working directory 
-# .libPaths("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/Settings/R_libraries")
 setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
@@ -57,7 +56,7 @@ library(shapper)        # SHAP
 library(cvAUC)          # For the Area Under the Curve (AUC) computation
 library(PRROC)          # For the ROC and Precision-Recall curve
 library(caret)          # To compute the confusion matrix
-library (randomForest)  # To model the R native Random Forest 
+library(randomForest)   # To model the R native Random Forest 
 library(DALEX)          # For model explanations 
 library(DALEXtra)       # Needed for lime functionality of DALEX 
 library(lime)           # Needed for lime calculation in DALEX 
@@ -65,16 +64,16 @@ library(localModel)     # Used for additional local explanation
 source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
 
 #### LOAD DATA ####
+
 # Indicate from which relative location to load & save from. Depends on user input. 
 relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
 
 load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
 load(paste0('data/', relative_dir, 'test', '.Rdata'))
 
-train_validate$Sex <- as.factor(train_validate$Sex)
-test$Sex <- as.factor(test$Sex)
+# train_validate$Sex <- as.factor(train_validate$Sex)
+# test$Sex <- as.factor(test$Sex)
 
-# Select sample 
 # TODO: Delete this part later 
 num_samples <- 3000
 train_validate <- train_validate[sample(nrow(train_validate), num_samples),]
@@ -116,6 +115,12 @@ if (use_h2o) {
 #######################
 #### PRELIMINARIES ####
 #######################
+
+# Select samples
+true_pos <- test[test$HC_Patient_Next_Year == 1 & ,]
+false_pos <- 
+true_neg <- 
+false_neg <- 
 
 predictors <- setdiff(names(test), c(target, excluded))
 pos_sample <- test[predictors][which(test[target] == 1)[1],]
