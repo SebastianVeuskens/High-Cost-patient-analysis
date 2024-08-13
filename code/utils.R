@@ -77,7 +77,6 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 
     # Compute the important measures with this threshold 
     confusion_matrix <- h2o.confusionMatrix(performance, threshold=threshold)
-    aic              <- as.numeric(h2o.aic(performance, threshold)) 
     accuracy         <-  as.numeric(h2o.accuracy (performance, threshold))       
     sensitivity      <-  as.numeric(h2o.sensitivity (performance, threshold)) 
     specificity      <-  as.numeric(h2o.specificity (performance, threshold)) 
@@ -89,7 +88,6 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
 
     # Confidence intervals 
-    interval_aic            <- confidence_interval(aic, n)
     interval_accuracy       <- confidence_interval(accuracy, n)
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
@@ -103,10 +101,10 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     interval_auc <- auc_info[['ci']]
 
     # Combine the results 
-    measures <- c('aic', 'accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
-    values   <- c(aic, accuracy, sensitivity, specificity, gmean, auc, cost_capture) 
-    lower    <- c(interval_aic[1], interval_accuracy[1], interval_sensitivity[1], interval_specificity[1], interval_gmean[1], interval_auc[1], interval_cost_capture[1])
-    upper    <- c(interval_aic[2], interval_accuracy[2], interval_sensitivity[2], interval_specificity[2], interval_gmean[2], interval_auc[2], interval_cost_capture[2])
+    measures <- c('accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
+    values   <- c(accuracy, sensitivity, specificity, gmean, auc, cost_capture) 
+    lower    <- c(interval_accuracy[1], interval_sensitivity[1], interval_specificity[1], interval_gmean[1], interval_auc[1], interval_cost_capture[1])
+    upper    <- c(interval_accuracy[2], interval_sensitivity[2], interval_specificity[2], interval_gmean[2], interval_auc[2], interval_cost_capture[2])
     results  <- data.frame(measures, values, lower, upper)
 
     # Save the results 
