@@ -192,7 +192,8 @@ nn_grid <- h2o.grid('deeplearning',
                     training_frame = train,
                     nfolds = nfolds,
                     seed = 12345,
-                    hyper_params = nn_grid_params)
+                    hyper_params = nn_grid_params,
+                    adaptive_rate = FALSE)
 
 # Show the grid search results, ordered by the corrisponding AUC 
 nn_gridperf <- h2o.getGrid(grid_id = 'nn_grid',
