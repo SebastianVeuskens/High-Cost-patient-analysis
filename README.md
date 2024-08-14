@@ -24,6 +24,7 @@ For threshold definition, the F1-score is used.
 ## Reproduction
 In each R-file in the *code* folder is a section called **MODIFY**. Inside that section, feel free to change the values of the variables to adapt them to your needs. However, do NOT change anything outside that section except you know what you are doing.  
 If you for example change the parameter *filter_hc* to TRUE. This will remove all the..... You have to run 1-4 and change it in all of the files. 
+The best models are saved in *model_evaluation* repository. For better reproduction, all model parameters for all models are also saved in both R-native and txt-file format in the *model_selection* repository. 
 
 ## TODO
 Figure out why my training auc is lower than my test/evaluation auc. 
