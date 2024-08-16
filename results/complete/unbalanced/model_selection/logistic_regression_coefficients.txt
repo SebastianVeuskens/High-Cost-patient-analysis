@@ -1,0 +1,69 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+$`Number of significant coefficients`
+[1] 91
+
+$`Number of all coefficients`
+[1] 91
+
+$`Significant coefficients`
+Coefficients: glm coefficients
+         names coefficients std_error    z_value  p_value
+1    Intercept    -5.387273  0.092679 -58.128329 0.000000
+2   HC_Patient     0.797362  0.093565   8.521991 0.000000
+3          Age     0.023625  0.001768  13.358956 0.000000
+4 DMP_Duration     0.016040  0.006662   2.407704 0.016053
+5  Total_Costs     0.000049  0.000005  10.901518 0.000000
+  standardized_coefficients
+1                 -3.762608
+2                  0.173226
+3                  0.516529
+4                  0.042008
+5                  0.281657
+
+---
+              names coefficients std_error   z_value  p_value
+86 Prescription_L04     2.384498  0.122819 19.414766 0.000000
+87 Prescription_M01     0.126627  0.051140  2.476095 0.013283
+88 Prescription_N06     0.251243  0.069180  3.631739 0.000282
+89 Prescription_R05    -0.388503  0.186422 -2.083995 0.037161
+90 Prescription_S03     0.781706  0.375873  2.079708 0.037552
+91 Prescription_V03     1.187005  0.334249  3.551258 0.000383
+   standardized_coefficients
+86                  0.240618
+87                  0.057087
+88                  0.070541
+89                 -0.082025
+90                  0.035022
+91                  0.044569
+
+$`All coefficients`
+Coefficients: glm coefficients
+         names coefficients std_error    z_value  p_value
+1    Intercept    -5.387273  0.092679 -58.128329 0.000000
+2   HC_Patient     0.797362  0.093565   8.521991 0.000000
+3          Age     0.023625  0.001768  13.358956 0.000000
+4 DMP_Duration     0.016040  0.006662   2.407704 0.016053
+5  Total_Costs     0.000049  0.000005  10.901518 0.000000
+  standardized_coefficients
+1                 -3.762608
+2                  0.173226
+3                  0.516529
+4                  0.042008
+5                  0.281657
+
+---
+              names coefficients std_error   z_value  p_value
+86 Prescription_L04     2.384498  0.122819 19.414766 0.000000
+87 Prescription_M01     0.126627  0.051140  2.476095 0.013283
+88 Prescription_N06     0.251243  0.069180  3.631739 0.000282
+89 Prescription_R05    -0.388503  0.186422 -2.083995 0.037161
+90 Prescription_S03     0.781706  0.375873  2.079708 0.037552
+91 Prescription_V03     1.187005  0.334249  3.551258 0.000383
+   standardized_coefficients
+86                  0.240618
+87                  0.057087
+88                  0.070541
+89                 -0.082025
+90                  0.035022
+91                  0.044569
+
