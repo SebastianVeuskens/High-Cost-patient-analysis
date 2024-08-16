@@ -6,7 +6,7 @@
 # Date: 2024-05-13
 # Data: Use the train_validate data set for training and the test data set for validation. 
 #
-# This script trains the best model from the model selection (see 3_model_selection.R) or user-specified model.
+# This script trains the best model from the model selection (see 3_model_performance.R) or user-specified model.
 # For validation, the previously unseen test data set is used. 
 
 #### MODIFY ####
@@ -18,8 +18,8 @@ filter_hc <- FALSE
 balance_hc <- FALSE 
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
-# Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
-user_model_name <- 'gradient boosting machine'
+# Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_performance.R).
+user_model_name <- 'neural network'
 # Number of variables to display in variable importance plot
 num_vars <- 5
 # Number of features to display in SHAP analysis plot
@@ -64,11 +64,11 @@ h2o.init()
 train_validate <- as.h2o(train_validate)
 test <- as.h2o(test)
 
-# Load the best model identified in the model selection (see 3_model_selection.R) or the user-specified model
+# Load the best model identified in the model selection (see 3_model_performance.R) or the user-specified model
 if (is.null(user_model_name)) {
-    model_params <- list.load(paste0('results/', relative_dir, 'model_selection/best_model.RData'))
+    model_params <- list.load(paste0('results/', relative_dir, 'model_performance/best_model.RData'))
 } else {
-    ordered_models <- list.load(paste0('results/', relative_dir, 'model_selection/ordered_models.RData'))
+    ordered_models <- list.load(paste0('results/', relative_dir, 'model_performance/ordered_models.RData'))
     # Select the model as specified by the user. 
     # First, identify the index of the specified model in the ordered_models object.
     model_ind <- which(ordered_models[[1]] == user_model_name) 

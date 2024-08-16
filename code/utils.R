@@ -37,7 +37,7 @@ confidence_interval <- function(value, n, confidence = 0.95) {
     return(c(lower, upper))
 }
 
-# Compute the AUC -> Used in evaluate_model
+# Compute the AUC 
 # TODO: Add documentation here 
 compute_auc <- function(predictions, newdata, label, confidence = 0.95) {
     labels <- as.data.frame(newdata[, label])[[1]]
@@ -46,13 +46,14 @@ compute_auc <- function(predictions, newdata, label, confidence = 0.95) {
     return(auc_info)
 }
 
-# Evaluate a trained model 
+# Evaluate a trained h2o model 
 #
 # A fully automated evaluation of all different metrics of the specified model
 # Results are saved in designated file.
 #
 # @params model The trained model
 # @params filepath The filepath and name to save the results 
+# @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
 evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year'){
     # Use the G-Mean score of sensitivity and specificity to determine the optimal cutoff threshold 
@@ -118,6 +119,43 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     return(results)
 }
 
+# Evaluate a trained R model 
+#
+# A fully automated evaluation of all different metrics of the specified model
+# Results are saved in designated file.
+#
+# @params model The trained model
+# @params filepath The filepath and name to save the results 
+# @params overwrite Indicator whether to save the results 
+# @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
+evalutate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year') {
+    # AUC 
+    auc_info     <- compute_auc(predictions, newdata=newdata, label=target_label)
+    auc          <- auc_info[['cvAUC']]
+    interval_auc <- auc_info[['ci']]
+    
+    # Confidence intervals 
+    interval_accuracy       <- confidence_interval(accuracy, n)
+    interval_sensitivity    <- confidence_interval(sensitivity, n)
+    interval_specificity    <- confidence_interval(specificity, n)
+    interval_gmean          <- confidence_interval(gmean, n)
+    interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
+    
+    # Combine the results 
+    measures <- c('accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
+    values   <- c(accuracy, sensitivity, specificity, gmean, auc, cost_capture) 
+    lower    <- c(interval_accuracy[1], interval_sensitivity[1], interval_specificity[1], interval_gmean[1], interval_auc[1], interval_cost_capture[1])
+    upper    <- c(interval_accuracy[2], interval_sensitivity[2], interval_specificity[2], interval_gmean[2], interval_auc[2], interval_cost_capture[2])
+    results  <- data.frame(measures, values, lower, upper)
+
+    
+    # Save the results 
+    if (overwrite) write.csv(results, paste0(filepath, '.csv'))
+
+    # Return the results
+    return(results)
+}
+
 
 # Save a list 
 #
@@ -148,7 +186,7 @@ save_list <- function(list, filepath) {
 # @params label_pos Column number of label 
 train_model <- function(model_params, train, first_val, last_val, label_pos) {
     name <- model_params[[1]] 
-    params <- model_params[['parameters']]
+    params <- model_params[[3]]
     if (name == 'logistic regression') {
         # TODO: Check if this is the right way to index the predictors 
         indices <- match(strsplit(params[['predictors']], ', ')[[1]], colnames(train))
@@ -157,10 +195,10 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
                          training_frame                      = train, 
                          seed                                = 12345)
     } else if (name == 'neural network') {
-        activation <- unname(params['activation'])
-        hidden <- unname(params['hidden'])
-        rate <- unname(params['rate'])
-        
+        activation <- params[['activation']]
+        hidden <- as.numeric(params[['hidden']])
+        rate <- as.numeric(params[['rate']])
+
         model <- h2o.deeplearning(x              = first_val:last_val, 
                                   y              = label_pos,
                                   training_frame = train, 
@@ -169,8 +207,8 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
                                   hidden         = hidden,
                                   rate           = rate)
     } else if (name == 'random forest') {
-        ntrees <- unname(params['ntrees'])
-        mtries <- unname(params['mtries'])
+        ntrees <- as.numeric(params[['ntrees']])
+        mtries <- as.numeric(params[['mtries']])
 
         model <- h2o.randomForest(x              = first_val:last_val, 
                                   y              = label_pos,
@@ -179,8 +217,8 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
                                   ntrees         = ntrees,
                                   mtries         = mtries)
     } else if (name == 'gradient boosting machine') {
-        ntrees <- unname(params['ntrees'])
-        max_depth <- unname(params['max_depth'])
+        ntrees <- as.numeric(params[['ntrees']])
+        max_depth <- as.numeric(params[['max_depth']])
         
         model <- h2o.gbm(x              = first_val:last_val, 
                          y              = label_pos,
