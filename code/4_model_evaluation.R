@@ -19,7 +19,7 @@ balance_hc <- FALSE
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
-user_model_name <- 'random forest'
+user_model_name <- 'gradient boosting machine'
 # Number of variables to display in variable importance plot
 num_vars <- 5
 # Number of features to display in SHAP analysis plot
@@ -97,14 +97,17 @@ last_val <- ncol(train_validate)
 # Train the model. Use the train_model function from the utils.R file
 model <- train_model(model_params, train_validate, first_val, last_val, label_pos)
 
+# Save the model
+# Exchange tabs with underscore for consistent file naming (to correct user input).  
+model_name <- gsub(' ', '_', model_params[[1]])
+h2o.saveModel(model, paste0('results/', relative_dir, 'model_evaluation'), filename=model_name, force=TRUE)
+
 
 #####################################
 #### STANDARD EVALUATION METRICS ####
 #####################################
 
 # Evaluate the model using the standard metrics. Use the evaluate_model function from the utils.R file
-# Exchange tabs with underscore for consistent file naming (to correct user input).  
-model_name <- gsub(' ', '_', model_params[[1]])
 filepath <- paste0('results/', relative_dir, 'model_evaluation/', model_name)
 results <- evaluate_model(model, filepath, overwrite, newdata=test)
 
@@ -157,6 +160,7 @@ if (!aucpr_match) {
 # Confusion matrix
 conf_matrix <- confusionMatrix(predicted_vs_true$predict, predicted_vs_true$label)
 print(conf_matrix$table)
+
 
 #####################
 #### XAI METHODS ####
