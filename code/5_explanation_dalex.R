@@ -11,21 +11,27 @@
 
 #### MODIFY ####
 # Your working directory 
-setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
+setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
 balance_hc <- FALSE 
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
-user_model_name <- 'random forest'
+user_model_name <- 'gradient boosting machine'
 # Whether to use H2O package or standard R packages
 use_h2o <- FALSE
+# Whether you want to save your results (and overwrite the old results) or not
+overwrite <- TRUE
 # Target variable
 target <- 'HC_Patient_Next_Year'
 # Variables to exclude 
 excluded <- 'Total_Costs_Next_Year'
-# Whether to use a patient that was predicted positive or negative
+# Whether to use a patient that was actually is positive or negative
 use_pos <- TRUE 
+# Whether to use a patient that is predicted positive or negative
+use_true <- TRUE
+# Specify the number of features you want to include in the LIME surrogate model  
+n_features <- 2
 #### MODIFY END ####
 
 #######################
@@ -74,10 +80,17 @@ load(paste0('data/', relative_dir, 'test', '.Rdata'))
 # train_validate$Sex <- as.factor(train_validate$Sex)
 # test$Sex <- as.factor(test$Sex)
 
-# TODO: Delete this part later 
-num_samples <- 3000
-train_validate <- train_validate[sample(nrow(train_validate), num_samples),]
-test <- test[sample(nrow(test), num_samples),]
+#### CREATE FOLDER STRUCTURE ####
+if (overwrite) {
+    dir.create('results', showWarnings=FALSE)
+    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
+}
+
+#### LOAD MODEL #### 
+model_name <- gsub(' ', '_', user_model_name) 
+model_filepath <- paste0('results/', relative_dir, 'model_evaluation/', model_name)
 if (use_h2o) {
     # Start H2O package
     h2o.init()
@@ -85,27 +98,19 @@ if (use_h2o) {
     # Load data frames into H2O framework
     train_validate <- as.h2o(train_validate)
     test <- as.h2o(test)
-    # Load the best model identified in the model selection (see 3_model_selection.R) or the user-specified model
-    if (is.null(user_model_name)) {
-        model_params <- list.load(paste0('results/', relative_dir, 'model_selection/best_model.RData'))
-    } else {
-        ordered_models <- list.load(paste0('results/', relative_dir, 'model_selection/ordered_models.RData'))
-        # Select the model as specified by the user. 
-        # First, identify the index of the specified model in the ordered_models object.
-        model_ind <- which(ordered_models[[1]] == user_model_name) 
-        # Second, extract the model at the index model_ind from the ordered_models object that contains all model parameters. 
-        model_params <- lapply(ordered_models, function(model) {model[[model_ind]]})
-    }
 
-    # Position of label and variables. Indicate where the features for prediction should start and end in the data.
-    label_pos <- 1 
-    first_val <- 3
-    last_val <- ncol(train_validate)
-
-    # Train the model. Use the train_model function from the utils.R file
-    model <- train_model(model_params, train_validate, first_val, last_val, label_pos)
+    # Load the model 
+    model <- h2o.loadModel(model_filepath)
+    predictions <- as.data.frame(h2o.predict(model, test))
+    
 } else {
-    model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=1000, mtry=30)
+    if (file.exists(paste0(model_filepath, '.RData'))) {
+        model <- readRDS(paste0(model_filepath, '.RData'))
+    } else {
+        model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=1000, mtry=30)
+        saveRDS(model, paste0(model_filepath, '.RData'))
+    }
+    predictions <- predict(model, test)$predict
 }
 
 ###############################################################
@@ -117,27 +122,45 @@ if (use_h2o) {
 #######################
 
 # Select samples
-true_pos <- test[test$HC_Patient_Next_Year == 1 & ,]
-false_pos <- 
-true_neg <- 
-false_neg <- 
+test_df <- as.data.frame(test)
+train_validate_df <- as.data.frame(train_validate)
+test_df$HC_Patient_Next_Year <- as.numeric(test_df$HC_Patient_Next_Year)
+train_validate_df$HC_Patient_Next_Year <- as.numeric(train_validate_df$HC_Patient_Next_Year)
 
-predictors <- setdiff(names(test), c(target, excluded))
-pos_sample <- test[predictors][which(test[target] == 1)[1],]
-neg_sample <- test[predictors][which(test[target] == 0)[1],]
-sample <- if (use_pos) pos_sample else neg_sample
+true_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 1,]
+false_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 0,]
+true_neg <- test_df[test_df$HC_Patient_Next_Year == 0 & predictions == 0,]
+false_neg <- test_df[test_df$HC_Patient_Next_Year == 0 & predictions == 1,]
+
+nrow(true_pos)
+nrow(false_pos)
+nrow(true_neg)
+nrow(false_neg)
+
+if (use_pos) {
+    if (use_true) {
+        sample <- true_pos[1,]
+    } else {
+        sample <- false_pos[1,]
+    }
+} else {
+    if (use_true) {
+        sample <- true_neg[1,]
+    } else {
+        sample <- false_neg[1,]
+    }
+}
+
+# TODO: Add part for logistic regresion later 
+if (user_model_name == 'logistic regression') {
+    warning('NOT THE RIGHT PREDICTORS USED') 
+} else {
+    predictors <- setdiff(names(test), c(target, excluded))
+}
 feature_of_interest <- 'Age'
 
-# TODO: Check later if I want this here 
-train_validate_df <- as.data.frame(train_validate)
-sample_df <- as.data.frame(sample)
-
 if (use_h2o) {
-    predict_fn <- function(model, newdata) {
-        results <- as.data.frame(h2o.predict(model, as.h2o(newdata)))
-        return(results[[3L]])
-    exp_dalex <- DALEX::explain(model, data=train_validate_df[predictors], y=train_validate_df[target], predict_function=predict_fn)
-    }
+    exp_dalex <- DALEXtra::explain_h2o(model, data = train_validate_df[predictors], y=train_validate_df[target])
 } else {
     exp_dalex <- DALEX::explain(model, data=train_validate_df[predictors], y=train_validate_df[target])
 }
@@ -146,15 +169,27 @@ if (use_h2o) {
 #### BREAK-DOWN PLOTS ####
 ##########################
 # CHARACTERISTIC: Uses different order of explanatory covariates to calculate feature attribution
+
+# Start time measurement 
+bd_start <- Sys.time()
+
 bd_dalex <- predict_parts(explainer=exp_dalex,
                           new_observation=sample,
                           type='break_down_interactions')
 
 plot(bd_dalex)
 
+# Stop and report time
+bd_end <- Sys.time()
+bd_runtim <- difftime(bd_end, bd_start, units='mins')
+print(paste0('Runtime for break-down plots: ', round(bd_runtime, 2), ' minutes'))
+
 ##############
 #### SHAP ####
 ##############
+
+# Start time measurement 
+shap_start <- Sys.time()
 
 shap_dalex <- predict_parts(explainer=exp_dalex, 
                             new_observation=sample, 
@@ -166,30 +201,47 @@ shap_dalex <- predict_parts(explainer=exp_dalex,
 # If, for example, boxplot goes over zero line, effect could also be negative with statistical tolerance 
 plot(shap_dalex, show_boxplots=TRUE)   
 
+# Stop and report time
+shap_end <- Sys.time()
+shap_runtim <- difftime(shap_end, shap_start, units='mins')
+print(paste0('Runtime for SHAP plots: ', round(shap_runtime, 2), ' minutes'))
+
+
 ##############
 #### LIME ####
 ##############
 # CHARACTERISTIC: Useful for explaining when a lot of explanatory variables exist, 
 # in opposition to SHAP (and other XAI methods) -> Here the case. 
 
-# Specify the number of features you want to include in the LIME surrogate model  
-n_features <- 2
+# Start time measurement 
+lime_start <- Sys.time()
+
 # Assert correct function naming between DALEX, DALEXtra and lime
 model_type.dalex_explainer <- DALEXtra::model_type.dalex_explainer
 predict_model.dalex_explainer <- DALEXtra::predict_model.dalex_explainer
 
 lime_dalex <- predict_surrogate(explainer=exp_dalex,
                                 new_observation=sample,
-                                n_features=n_features,
+                                n_features=n_features_lime,
                                 n_permutations=1000,
                                 type='lime')
 plot(lime_dalex)
+
+# Stop and report time
+lime_end <- Sys.time()
+lime_runtim <- difftime(lime_end, lime_start, units='mins')
+print(paste0('Runtime for LIME plots: ', round(lime_runtime, 2), ' minutes'))
+
 
 #####################
 #### LOCAL MODEL ####
 #####################
 # CHARACTERISTIC: Can be understood and used as method to see what-if,
 # somehow similar to Counterfactual explanations 
+
+# Start time measurement 
+locModel_start <- Sys.time()
+
 # Also uses LIME. 
 locModel_dalex <- predict_surrogate(explainer=exp_dalex,
                                     new_observation=sample,
@@ -199,11 +251,21 @@ locModel_dalex <- predict_surrogate(explainer=exp_dalex,
 
 plot_interpretable_feature(locModel_dalex, feature_of_interest)                                    
 
+# Stop and report time
+locModel_end <- Sys.time()
+locModel_runtim <- difftime(locModel_end, locModel_start, units='mins')
+print(paste0('Runtime for local model plots: ', round(locModel_runtime, 2), ' minutes'))
+
+
 ################################
 #### LOCAL-DIAGNOSTIC PLOTS ####
 ################################
 # CHARACTERISTIC: Not established in literature -> Have to think about whether to use it or not 
 # Helpful to compare to other users and determine model reliability in that certain region. 
+
+# Start time measurement 
+locDiag_start <- Sys.time()
+
 neighbors <- 100
 locDiag_dalex_gen <- DALEX::predict_diagnostics(explainer=exp_dalex,
                                          new_observation=sample,
@@ -219,10 +281,20 @@ locDiag_dalex_ind <- predict_diagnostics(explainer=exp_dalex,
 
 plot(locDiag_dalex_ind)
 
+# Stop and report time
+locDiag_end <- Sys.time()
+locDiag_runtim <- difftime(locDiag_end, locDiag_start, units='mins')
+print(paste0('Runtime for local diagnostic plots: ', round(locDiag_runtime, 2), ' minutes'))
+
+
 #############################
 #### VARIABLE IMPORTANCE ####
 #############################
 # CHARACTERISTICS: Depends on the ordering of the variables (can be changed with the variables argument)
+
+# Start time measurement 
+vImp_start <- Sys.time()
+
 # Variable importance based on RMSE loss 
 set.seed(12345)
 vImp_dalex <- model_parts(explainer=exp_dalex,
@@ -232,6 +304,12 @@ vImp_dalex <- model_parts(explainer=exp_dalex,
 
 plot(vImp_dalex)    
 
+# Stop and report time
+vImp_end <- Sys.time()
+vImp_runtim <- difftime(vImp_end, vImp_start, units='mins')
+print(paste0('Runtime variable importence plots: ', round(vImp_runtime, 2), ' minutes'))
+
+
 #############
 #### PDP ####
 #############
@@ -239,16 +317,44 @@ plot(vImp_dalex)
 # -> not exactly 2-variable plot, only for categorical + numerical variable pair 
 
 #### Standard PDP plot
+
+# Start time measurement 
+pdp_start <- Sys.time()
+
 pdp_dalex <- model_profile(explainer=exp_dalex, 
                            variables=feature_of_interest)
 
 plot(pdp_dalex)                           
 
+# Stop and report time
+pdp_end <- Sys.time()
+pdp_runtim <- difftime(pdp_end, pdp_start, units='mins')
+print(paste0('Runtime for PDP plots: ', round(pdp_runtime, 2), ' minutes'))
+
+
 #### Grouped PDP plot 
+
+# Start time measurement 
+gPdp_start <- Sys.time()
+
 feature_to_group <- 'x1' # Must be categorical variable 
 
-pdp_dalex <- model_profile(explainer=exp_dalex, 
+gPdp_dalex <- model_profile(explainer=exp_dalex, 
                            variables=feature_of_interest,
                            groups=feature_to_group)
 
-plot(pdp_dalex)    
+plot(gPdp_dalex)    
+
+# Stop and report time
+gPdp_end <- Sys.time()
+gPdp_runtim <- difftime(gPdp_end, gPdp_start, units='mins')
+print(paste0('Runtime for grouped PDP plots: ', round(gPdp_runtime, 2), ' minutes'))
+
+#  Save the runtimes
+methods <- c('Break-down plot', 'SHAP', 'LIME', 'Local Model', 
+             'Local Diagnostics', 'Variable Importance', 'PDP', 'Grouped PDP')
+runtimes_in_minutes <- round(c(bd_runtime, shap_runtime, lime_runtime, locModel_runtime,
+                               locDiag_runtime, vImp_runtime, pdp_runtime, gPdp_runtime), 4)
+results <- data.frame(methods, runtimes_in_minutes)
+rt_filepath <- paste0('results/', relative_dir, 'model_explanation/runtimes_methods.csv')
+if (overwrite) write.csv(results, rt_filepath)

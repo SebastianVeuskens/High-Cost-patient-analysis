@@ -1,13 +1,13 @@
 #####################################
-#### EVALUATE FINAL MODEL ###########
+#### VALIDATE FINAL MODEL ###########
 #####################################
-# File: 4_model_evaluation.R
+# File: 4_model_validation.R
 # Author: Sebastian Benno Veuskens 
 # Date: 2024-05-13
-# Data: Use the train_validate data set for training and the test data set for evaluation. 
+# Data: Use the train_validate data set for training and the test data set for validation. 
 #
 # This script trains the best model from the model selection (see 3_model_selection.R) or user-specified model.
-# For evaluation the previously unseen test data set is used. 
+# For validation, the previously unseen test data set is used. 
 
 #### MODIFY ####
 # Your working directory 
@@ -81,7 +81,7 @@ if (overwrite) {
     dir.create('results', showWarnings=FALSE)
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_evaluation'), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir, 'model_validation'), showWarnings=FALSE)
 }
 
 
@@ -100,7 +100,7 @@ model <- train_model(model_params, train_validate, first_val, last_val, label_po
 # Save the model
 # Exchange tabs with underscore for consistent file naming (to correct user input).  
 model_name <- gsub(' ', '_', model_params[[1]])
-h2o.saveModel(model, paste0('results/', relative_dir, 'model_evaluation'), filename=model_name, force=TRUE)
+h2o.saveModel(model, paste0('results/', relative_dir, 'model_validation'), filename=model_name, force=TRUE)
 
 
 #####################################
@@ -108,7 +108,7 @@ h2o.saveModel(model, paste0('results/', relative_dir, 'model_evaluation'), filen
 #####################################
 
 # Evaluate the model using the standard metrics. Use the evaluate_model function from the utils.R file
-filepath <- paste0('results/', relative_dir, 'model_evaluation/', model_name)
+filepath <- paste0('results/', relative_dir, 'model_validation/', model_name)
 results <- evaluate_model(model, filepath, overwrite, newdata=test)
 
 

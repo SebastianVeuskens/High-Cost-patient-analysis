@@ -1,229 +1,229 @@
 [1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
 [[1]]
          activation              hidden                rate                 auc 
-  "TanhWithDropout"               "100"             "0.003" "0.855712599046032" 
+  "TanhWithDropout"               "100"             "0.003" "0.855734343625476" 
 
 [[2]]
          activation              hidden                 auc 
-  "TanhWithDropout"               "100" "0.855239440590833" 
+  "TanhWithDropout"               "100" "0.855091114982821" 
 
 [[3]]
          activation              hidden                rate                 auc 
-  "TanhWithDropout"               "100"             "0.007" "0.854423985660874" 
+  "TanhWithDropout"               "100"             "0.007" "0.854776863429995" 
 
 [[4]]
-         activation              hidden                rate                 auc 
-"MaxoutWithDropout"                "10"             "0.003" "0.852158975428852" 
+            activation                 hidden                    auc 
+"RectifierWithDropout"                   "20"     "0.85330666503428" 
 
 [[5]]
             activation                 hidden                   rate 
-"RectifierWithDropout"                   "10"                "0.007" 
+"RectifierWithDropout"                   "20"                "0.007" 
                    auc 
-   "0.850967066246652" 
+    "0.85277344826158" 
 
 [[6]]
          activation              hidden                rate                 auc 
-             "Tanh"                "10"             "0.007" "0.850049860590177" 
+"MaxoutWithDropout"                "10"             "0.003" "0.851670154001931" 
 
 [[7]]
-    hidden        auc 
-10.0000000  0.8485739 
+            activation                 hidden                    auc 
+"RectifierWithDropout"                   "10"    "0.851358968641824" 
 
 [[8]]
-         activation              hidden                 auc 
-             "Tanh"               "100" "0.848510229529797" 
-
-[[9]]
-        activation             hidden               rate                auc 
-            "Tanh"              "100"            "0.007" "0.84809243440656" 
-
-[[10]]
-            activation                 hidden                   rate 
-"RectifierWithDropout"                   "20"                "0.007" 
-                   auc 
-   "0.847276233434806" 
-
-[[11]]
-            activation                 hidden                   rate 
-"RectifierWithDropout"                   "20"                "0.003" 
-                   auc 
-   "0.846401423263383" 
-
-[[12]]
-         activation              hidden                 auc 
-  "TanhWithDropout"                "20" "0.846234403644734" 
-
-[[13]]
-            activation                 hidden                   rate 
-"RectifierWithDropout"                  "100"                "0.003" 
-                   auc 
-   "0.846104115843058" 
-
-[[14]]
-            activation                 hidden                    auc 
-"RectifierWithDropout"                   "10"    "0.845511039957733" 
-
-[[15]]
-            activation                 hidden                    auc 
-"RectifierWithDropout"                   "20"    "0.844606192815603" 
-
-[[16]]
-    hidden       rate        auc 
-10.0000000  0.0070000  0.8445273 
-
-[[17]]
-         activation              hidden                rate                 auc 
-  "TanhWithDropout"                "20"             "0.003" "0.844526401497321" 
-
-[[18]]
             activation                 hidden                   rate 
 "RectifierWithDropout"                   "10"                "0.003" 
                    auc 
-   "0.844335988976518" 
+   "0.849578233278348" 
+
+[[9]]
+            activation                 hidden                   rate 
+"RectifierWithDropout"                   "20"                "0.003" 
+                   auc 
+   "0.849573788275401" 
+
+[[10]]
+         activation              hidden                rate                 auc 
+             "Tanh"               "100"             "0.007" "0.849383524181761" 
+
+[[11]]
+            activation                 hidden                   rate 
+"RectifierWithDropout"                  "100"                "0.003" 
+                   auc 
+   "0.848075939461528" 
+
+[[12]]
+            activation                 hidden                   rate 
+"RectifierWithDropout"                   "10"                "0.007" 
+                   auc 
+   "0.848068068915888" 
+
+[[13]]
+         activation              hidden                 auc 
+  "TanhWithDropout"                "20" "0.848068049385998" 
+
+[[14]]
+         activation              hidden                rate                 auc 
+             "Tanh"                "20"             "0.007" "0.846788802536048" 
+
+[[15]]
+    hidden        auc 
+10.0000000  0.8467518 
+
+[[16]]
+         activation              hidden                rate                 auc 
+"MaxoutWithDropout"                "20"             "0.003" "0.846479495951352" 
+
+[[17]]
+         activation              hidden                 auc 
+             "Tanh"               "100" "0.845007672668796" 
+
+[[18]]
+    hidden        auc 
+20.0000000  0.8445448 
 
 [[19]]
-         activation              hidden                rate                 auc 
-  "TanhWithDropout"                "20"             "0.007" "0.844040470494109" 
+    hidden       rate        auc 
+10.0000000  0.0070000  0.8437707 
 
 [[20]]
-    hidden       rate        auc 
-20.0000000  0.0030000  0.8435667 
+            activation                 hidden                    auc 
+"RectifierWithDropout"                  "100"    "0.843680729921668" 
 
 [[21]]
-         activation              hidden                rate                 auc 
-"MaxoutWithDropout"                "20"             "0.003" "0.842019728407351" 
-
-[[22]]
-            activation                 hidden                    auc 
-"RectifierWithDropout"                  "100"    "0.840735724076215" 
-
-[[23]]
-         activation              hidden                rate                 auc 
-             "Tanh"                "20"             "0.007" "0.839730215975428" 
-
-[[24]]
-         activation              hidden                 auc 
-"MaxoutWithDropout"                "10" "0.839540736983364" 
-
-[[25]]
             activation                 hidden                   rate 
 "RectifierWithDropout"                  "100"                "0.007" 
                    auc 
-   "0.839474175212517" 
+   "0.843366970522068" 
+
+[[22]]
+         activation              hidden                rate                 auc 
+  "TanhWithDropout"                "20"             "0.003" "0.842148985030839" 
+
+[[23]]
+         activation              hidden                rate                 auc 
+  "TanhWithDropout"                "10"             "0.003" "0.841280338492677" 
+
+[[24]]
+    hidden       rate        auc 
+20.0000000  0.0030000  0.8404787 
+
+[[25]]
+         activation              hidden                rate                 auc 
+  "TanhWithDropout"                "20"             "0.007" "0.839641851035468" 
 
 [[26]]
-    hidden       rate        auc 
-10.0000000  0.0030000  0.8393957 
+         activation              hidden                rate                 auc 
+             "Tanh"                "10"             "0.007" "0.837743346529758" 
 
 [[27]]
          activation              hidden                 auc 
-             "Tanh"                "20" "0.838186960167477" 
+             "Tanh"                "10" "0.837652739558434" 
 
 [[28]]
          activation              hidden                 auc 
-             "Tanh"                "10" "0.837816778915881" 
+             "Tanh"                "20" "0.837499691623038" 
 
 [[29]]
-         activation              hidden                rate                 auc 
-  "TanhWithDropout"                "10"             "0.003" "0.837686944207651" 
+    hidden       rate        auc 
+10.0000000  0.0030000  0.8367701 
 
 [[30]]
-    hidden        auc 
-20.0000000  0.8369357 
+         activation              hidden                 auc 
+"MaxoutWithDropout"                "10" "0.836101097615749" 
 
 [[31]]
-         activation              hidden                 auc 
-  "TanhWithDropout"                "10" "0.836661453123491" 
+    hidden       rate        auc 
+20.0000000  0.0070000  0.8360804 
 
 [[32]]
-         activation              hidden                rate                 auc 
-  "TanhWithDropout"                "10"             "0.007" "0.836363067653242" 
+         activation              hidden                 auc 
+  "TanhWithDropout"                "10" "0.833518519655592" 
 
 [[33]]
-    hidden       rate        auc 
-20.0000000  0.0070000  0.8362577 
+         activation              hidden                rate                 auc 
+  "TanhWithDropout"                "10"             "0.007" "0.831108886682688" 
 
 [[34]]
-     hidden        rate         auc 
-100.0000000   0.0030000   0.8295908 
+     hidden         auc 
+100.0000000   0.8302028 
 
 [[35]]
-     hidden         auc 
-100.0000000   0.8240999 
+     hidden        rate         auc 
+100.0000000   0.0030000   0.8295482 
 
 [[36]]
          activation              hidden                rate                 auc 
-             "Tanh"               "100"             "0.003" "0.822671454739472" 
+             "Tanh"               "100"             "0.003" "0.825091532297509" 
 
 [[37]]
-         activation              hidden                rate                 auc 
-"MaxoutWithDropout"                "10"             "0.007"   "0.8208918364857" 
+     hidden        rate         auc 
+100.0000000   0.0070000   0.8209262 
 
 [[38]]
-     hidden        rate         auc 
-100.0000000   0.0070000   0.8152029 
+         activation              hidden                 auc 
+"MaxoutWithDropout"                "20" "0.814812002076668" 
 
 [[39]]
          activation              hidden                rate                 auc 
-"MaxoutWithDropout"               "100"             "0.003" "0.814985864968747" 
+"MaxoutWithDropout"                "20"             "0.007" "0.814474119357032" 
 
 [[40]]
-         activation              hidden                 auc 
-"MaxoutWithDropout"                "20" "0.814982943297215" 
+         activation              hidden                rate                 auc 
+"MaxoutWithDropout"               "100"             "0.003" "0.813952331475916" 
 
 [[41]]
          activation              hidden                rate                 auc 
-             "Tanh"                "10"             "0.003" "0.813279600981538" 
+             "Tanh"                "10"             "0.003" "0.806456525363538" 
 
 [[42]]
          activation              hidden                rate                 auc 
-             "Tanh"                "20"             "0.003" "0.809475807286358" 
+"MaxoutWithDropout"                "10"             "0.007" "0.806121599469237" 
 
 [[43]]
          activation              hidden                rate                 auc 
-           "Maxout"                "10"             "0.003" "0.809335367847899" 
+             "Tanh"                "20"             "0.003" "0.805254038792955" 
 
 [[44]]
-        activation             hidden               rate                auc 
-          "Maxout"               "20"            "0.003" "0.79917601285173" 
+         activation              hidden                rate                 auc 
+           "Maxout"                "20"             "0.003" "0.803625285032884" 
 
 [[45]]
-         activation              hidden                 auc 
-           "Maxout"                "10" "0.782592613042557" 
+         activation              hidden                rate                 auc 
+           "Maxout"                "10"             "0.003" "0.796547899000221" 
 
 [[46]]
-         activation              hidden                rate                 auc 
-"MaxoutWithDropout"                "20"             "0.007" "0.772403560895767" 
+       activation            hidden               auc 
+         "Maxout"              "10" "0.7747340392248" 
 
 [[47]]
          activation              hidden                 auc 
-           "Maxout"                "20" "0.771634059796804" 
+           "Maxout"                "20" "0.771544788669952" 
 
 [[48]]
          activation              hidden                rate                 auc 
-           "Maxout"               "100"             "0.003" "0.769653115719738" 
+           "Maxout"               "100"             "0.003" "0.763994334019582" 
 
 [[49]]
          activation              hidden                rate                 auc 
-           "Maxout"                "10"             "0.007" "0.768678234392333" 
+           "Maxout"                "10"             "0.007" "0.763053934665831" 
 
 [[50]]
-         activation              hidden                rate                 auc 
-           "Maxout"                "20"             "0.007" "0.739703322535804" 
+         activation              hidden                 auc 
+"MaxoutWithDropout"               "100" "0.752851945919954" 
 
 [[51]]
-         activation              hidden                 auc 
-"MaxoutWithDropout"               "100" "0.738827403066633" 
+         activation              hidden                rate                 auc 
+           "Maxout"                "20"             "0.007" "0.734451485152042" 
 
 [[52]]
-         activation              hidden                 auc 
-           "Maxout"               "100" "0.710441540032126" 
+         activation              hidden                rate                 auc 
+"MaxoutWithDropout"               "100"             "0.007" "0.727248959396687" 
 
 [[53]]
          activation              hidden                rate                 auc 
-"MaxoutWithDropout"               "100"             "0.007" "0.699163141873073" 
+           "Maxout"               "100"             "0.007" "0.714806587609985" 
 
 [[54]]
-         activation              hidden                rate                 auc 
-           "Maxout"               "100"             "0.007" "0.693815725208012" 
+         activation              hidden                 auc 
+           "Maxout"               "100" "0.713383346881609" 
 

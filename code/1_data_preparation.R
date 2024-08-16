@@ -13,7 +13,7 @@
 
 ### MODIFY ####
 # Your working directory
-setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
+setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
@@ -42,7 +42,7 @@ data <- rbind(data_2019, data_2020, data_2021)
 
 # Make label factor 
 data_2019$HC_Patient_Next_Year <- as.factor(data_2019$HC_Patient_Next_Year)
-data_2020$HC_Patient_Next_Year <- as.factor(data_2020$C_Patient_Next_Year)
+data_2020$HC_Patient_Next_Year <- as.factor(data_2020$HC_Patient_Next_Year)
 data_2021$HC_Patient_Next_Year <- as.factor(data_2021$HC_Patient_Next_Year)
 data$HC_Patient_Next_Year <- as.factor(data$HC_Patient_Next_Year)
 
