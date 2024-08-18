@@ -10,11 +10,13 @@
 
 # INSTALL LIBRARIES 
 # install.packages('h2o')
+# install.packages('caret')
 # install.packages('cvAUC')
 # install.packages('rlist')
 
 # LOAD LIBRARIES & SOURCES
 library(h2o)    # The modelling framework 
+library(caret)  # Performance measure functionality 
 library(cvAUC)  # For the Area Under the Curve (AUC) computation
 library(rlist)  # To save inhomogeneous lists and load them again 
 
@@ -128,7 +130,22 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 # @params filepath The filepath and name to save the results 
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
-evalutate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year') {
+evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year') {
+    predictions <- predict(model, newdata)
+    confusion_matrix <- caret::confusionMatrix(as.factor(predictions), newdata[target_label])
+
+    accuracy <- caret::accuracy
+    sensitivity <- caret::sensitivity 
+    specificity <- caret::specificity 
+    gmean <- sqrt(specificity * sensitivity)
+
+    # Cost Capture 
+    # TODO: Check if p1 indexing makes sense here 
+    idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
+    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
+
+    
     # AUC 
     auc_info     <- compute_auc(predictions, newdata=newdata, label=target_label)
     auc          <- auc_info[['cvAUC']]
@@ -193,7 +210,9 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
         model <- h2o.glm(x                                   = indices, 
                          y                                   = label_pos,
                          training_frame                      = train, 
-                         seed                                = 12345)
+                         seed                                = 12345,
+                         calc_like                           = TRUE,
+                         compute_p_values                    = TRUE)
     } else if (name == 'neural network') {
         activation <- params[['activation']]
         hidden <- as.numeric(params[['hidden']])
