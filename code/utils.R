@@ -274,3 +274,44 @@ save_lr_coefs <- function(model, filepath) {
     )
     save_list(coefs, paste0(filepath, '_coefficients'))
 }
+
+# TODO: Add documetation 
+net_benefit <- function(prediction_true, x, n, group) {
+    nb <- c()
+    for (p_t in x) {
+        tpr <- sum(prediction_true > p_t) / n 
+        fnr <- sum(prediction_true <= p_t) / n 
+        nb <- c(nb, tpr - fnr * p_t / (1 - p_t))
+    }
+    return(data.frame(x=x, net_benefit=nb, group=group))
+}
+
+
+# Create a decision curve analysis plot
+#
+# This function creates the decision curves for all specified models
+# Default decision strategies (all and none receives treatment) are included 
+#
+# @params models_predictions_list List of model predictions which to include a decision curve  
+# @params model_names_list List of names for each model 
+# @params newdata Data to make the decision curve on 
+decision_curves <- function(models_predictions_list, model_names_list, newdata, x=seq(0, 0.3, 0.0001), target='HC_Patient_Next_Year') {
+    # Assert that a name exists for each model and vice versa 
+    stopifnot(length(models_predictions_list) == length(model_names_list))
+
+    n <- nrow(newdata)
+    none_nb <- numeric(length(x))
+    none <- data.frame(x=x, net_benefit=none_nb, group='None')
+    all_nb <- sum(newdata[target] == 1) / n - sum(newdata[target] == 0) / n * x / (1 - x) 
+    all <- data.frame(x=x, net_benefit=all_nb, group='All')
+    dca <- rbind(none, all)
+    for (model_idx in seq(length(models_predictions_list))) {
+        predictions <- models_predictions_list[[model_idx]]
+        predictions_true <- predictions[newdata[target] == 1]
+        nb <- net_benefit(predictions_true, x, n, model_names_list[[model_idx]])
+        dca <- rbind(dca, nb)
+    }
+
+    ggplot(dca, aes(x=x, y=net_benefit, col=group)) + 
+        geom_line() 
+}
