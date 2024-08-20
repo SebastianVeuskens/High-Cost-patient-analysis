@@ -13,12 +13,16 @@
 # install.packages('caret')
 # install.packages('cvAUC')
 # install.packages('rlist')
+# install.packages('ggplot2')
+# install.packages('ggthemes')
 
 # LOAD LIBRARIES & SOURCES
-library(h2o)    # The modelling framework 
-library(caret)  # Performance measure functionality 
-library(cvAUC)  # For the Area Under the Curve (AUC) computation
-library(rlist)  # To save inhomogeneous lists and load them again 
+library(h2o)        # The modelling framework 
+library(caret)      # Performance measure functionality 
+library(cvAUC)      # For the Area Under the Curve (AUC) computation
+library(rlist)      # To save inhomogeneous lists and load them again 
+library(ggplot2)    # To visualize the plot 
+library(ggthemes)   # A better style for the plot visualization
 
 # TODO: Check Interal calculation 
 # Compute the confidence interval
@@ -314,23 +318,35 @@ net_benefit <- function(prediction_true, x, n, group) {
 # @params models_predictions_list List of model predictions which to include a decision curve  
 # @params model_names_list List of names for each model 
 # @params newdata Data to make the decision curve on 
-decision_curves <- function(models_predictions_list, model_names_list, newdata, x=seq(0, 0.3, 0.0001), target='HC_Patient_Next_Year') {
+decision_curves <- function(models_predictions_list, model_names_list, newdata, filepath=NULL, x=seq(0, 0.3, 0.0001), target='HC_Patient_Next_Year') {
     # Assert that a name exists for each model and vice versa 
     stopifnot(length(models_predictions_list) == length(model_names_list))
 
     n <- nrow(newdata)
     none_nb <- numeric(length(x))
     none <- data.frame(x=x, net_benefit=none_nb, group='None')
-    all_nb <- sum(newdata[target] == 1) / n - sum(newdata[target] == 0) / n * x / (1 - x) 
+    all_nb <- sum(newdata[target] == '1') / n - sum(newdata[target] == '0') / n * x / (1 - x) 
     all <- data.frame(x=x, net_benefit=all_nb, group='All')
     dca <- rbind(none, all)
     for (model_idx in seq(length(models_predictions_list))) {
         predictions <- models_predictions_list[[model_idx]]
-        predictions_true <- predictions[newdata[target] == 1]
+        predictions_true <- predictions[newdata[target] == '1']
         nb <- net_benefit(predictions_true, x, n, model_names_list[[model_idx]])
         dca <- rbind(dca, nb)
     }
 
     ggplot(dca, aes(x=x, y=net_benefit, col=group)) + 
-        geom_line() 
+        geom_line() +
+        labs(x='Decision threshold', y='Net benefit') +
+        ggtitle('Decision curves for all models') +
+        theme_fivethirtyeight() +
+        theme(legend.title=element_blank(), 
+              axis.title=element_text(),
+              plot.title=element_text(hjust=0.5)) +
+        coord_cartesian(ylim=c(-0.01, NA))
+    
+    if (!is.null(filepath)) {
+        ggsave(filename=paste0(filepath, '/decision_curve_analysis.png'),
+               width=640/72, height=450/72, dpi=300)
+    }
 }
