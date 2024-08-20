@@ -186,7 +186,7 @@ evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='
     if (overwrite) write.csv(results, paste0(filepath, '.csv'))
 
     # Return the results
-    return(results)
+    return(list(best_threshold, results))
 }
 
 
