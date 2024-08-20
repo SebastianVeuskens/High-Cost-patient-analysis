@@ -13,6 +13,7 @@
 # install.packages('caret')
 # install.packages('cvAUC')
 # install.packages('rlist')
+# install.packages('boot')
 # install.packages('ggplot2')
 # install.packages('ggthemes')
 
@@ -21,6 +22,7 @@ library(h2o)        # The modelling framework
 library(caret)      # Performance measure functionality 
 library(cvAUC)      # For the Area Under the Curve (AUC) computation
 library(rlist)      # To save inhomogeneous lists and load them again 
+library(boot)       # Bootstrapping library for cost capture confidence interval
 library(ggplot2)    # To visualize the plot 
 library(ggthemes)   # A better style for the plot visualization
 
@@ -63,19 +65,30 @@ compute_cc <- function(prediction_probabilities, newdata, target_label, cost_lab
 
 # Compute the confidence interval for the cost capture
 # TODO: Add documentation here 
-compute_cc_confidence <- function(prediction_probabilities, newdata, target_label, cost_label, B=10000, confidence=0.95) {
-    alpha <- 1 - confidence
-    n <- length(predictions_probabilities)
-    cost_captures <- c()
-    for (i in 1:B) {
-        sample_indeces <- sample(prediction_probabilities, n, replace=TRUE)
-        cur_prediction_probs <- prediction_probabilities[sample_indeces]
-        cur_newdata <- newdata[sample_indeces,]
-        cur_cost_capture <- compute_cc(cur_prediction_probs, cur_newdata, target_label, cost_label)
+compute_cc_confidence <- function(prediction_probabilities, newdata, target_label, cost_label, B, confidence=0.95) {
+    # TODO: Delete this part later 
+    # alpha <- 1 - confidence
+    # n <- length(prediction_probabilities)
+    # cost_captures <- c()
+    # for (i in 1:B) {
+    #     print(i)
+    #     sample_indeces <- sample(1:n, n, replace=TRUE)
+    #     cur_prediction_probs <- prediction_probabilities[sample_indeces]
+    #     cur_newdata <- newdata[sample_indeces,]
+    #     cur_cost_capture <- compute_cc(cur_prediction_probs, cur_newdata, target_label, cost_label)
+    #     cost_captures <- c(cost_captures, cur_cost_captures)
+    # }
+    # lower <- quantile(cost_captures, alpha / 2)
+    # upper <- quantile(cost_captures, 1 - alpha / 2)
+    # return(c(lower, upper))
+    boot_data <- cbind(probs = prediction_probabilities, newdata)
+    boot_statistic <- function(boot_data, indices) {
+        cur_sample <- boot_data[indices,]
+        return(compute_cc(cur_sample$probs, cur_sample[,-1], target_label, cost_label))
     }
-    lower <- quantile(cost_captures, alpha / 2)
-    upper <- quantile(cost_captures, 1 - alpha / 2)
-    return(c(lower, upper))
+    reps <- boot(boot_data, boot_statistic, B)
+    boot_conf <- boot.ci(reps, type='basic')
+    return(boot_conf$basic[4:5])
 }
 
 # Evaluate a trained h2o model 
@@ -87,7 +100,7 @@ compute_cc_confidence <- function(prediction_probabilities, newdata, target_labe
 # @params filepath The filepath and name to save the results 
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
-evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year'){
+evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=1000){
     # Use the G-Mean score of sensitivity and specificity to determine the optimal cutoff threshold 
     # xval indicates that we want to receive the results of cross-validation -> Use only if no newdata is provided
     xval = is.null(newdata)
@@ -125,15 +138,10 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     interval_specificity    <- confidence_interval(specificity, n)
     interval_gmean          <- confidence_interval(gmean, n)
 
-    # TODO: Check if floor is really appropriate here (changes results only very slightly)
-    # idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
-    # idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
-    # cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
+    # Cost Capture 
     cost_capture <- compute_cc(predictions$p1, newdata, target_label, cost_label)
-    # interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
-    interval_cost_capture   <- compute_cc_confidence(predictions$p1, newdata, target_label, cost_label)
+    interval_cost_capture <- compute_cc_confidence(as.data.frame(predictions)$p1, as.data.frame(newdata), target_label, cost_label, B=B)
 
-    # TODO: Check why I calculated the AUC like this and not with H2O native functions 
     # AUC 
     auc_info     <- compute_auc(predictions$p1, newdata=newdata, label=target_label)
     auc          <- auc_info[['cvAUC']]
@@ -162,7 +170,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 # @params filepath The filepath and name to save the results 
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
-evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year') {
+evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=1000) {
     prediction_probs <- predict(model, newdata, type='prob')[,2]
     prediction_probs_pos <- prediction_probs[newdata[,target] == 1]
     prediction_probs_neg <- prediction_probs[newdata[,target] == 0]
@@ -200,12 +208,8 @@ evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='
     interval_gmean          <- confidence_interval(gmean, n)
 
     # Cost Capture 
-    # idx_cc_pred      <- which(prediction_probs >= quantile(prediction_probs, 0.95))[1:floor(n * 0.05)]
-    # idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
-    # cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
     cost_capture <- compute_cc(prediction_probs, newdata, target_label, cost_label)
-    # interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
-    interval_cost_capture   <- compute_cc_confidence(prediction_probs, newdata, target_label, cost_label)
+    interval_cost_capture   <- compute_cc_confidence(prediction_probs, newdata, target_label, cost_label, B=B)
     
     # Combine the results 
     measures <- c('accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
