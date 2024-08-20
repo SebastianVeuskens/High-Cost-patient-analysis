@@ -44,6 +44,7 @@ n_features <- 2
 # INSTALL LIBRARIES 
 # install.packages("dplyr")
 # install.packages("h2o")
+# install.packages('randomForest')
 # install.packages("pdp")               
 # install.packages("shapper")  
 # install.packages("cvAUC")
@@ -58,6 +59,7 @@ n_features <- 2
 # LOAD LIBRARIES & SOURCES
 library(dplyr)          # To bind two data frames (predictions and labels) together 
 library(h2o)            # The modelling framework 
+library(randomForest)   # For the random Forest in R
 library(pdp)            # PDP 
 library(shapper)        # SHAP 
 library(cvAUC)          # For the Area Under the Curve (AUC) computation
@@ -121,13 +123,14 @@ if (use_h2o) {
             ntrees <- as.numeric(best_params[['ntrees']])
             mtries <- as.numeric(best_params[['mtries']])
             model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=ntrees, mtry=mtries)
+            model$cutoff <- evaluate_r_model(model, model_filepath, overwrite, newdata=test[,-2])[[1]]
             saveRDS(model, paste0(model_filepath, '.RData'))
         } else {
             warning('ONLY RANDOM FOREST IS IMPLEMENTED SO FAR')
         }
     }
-    predictions <- predict(model, test)$predict
-    evaluate_r_model(model, paste0(model_filepath, '_performance'), overwrite, test)
+    prediction_probs <- predict(model, test[,-2], type='prob')
+    predictions <- as.numeric(prediction_probs >= model$cutoff)
 }
 
 ###############################################################
