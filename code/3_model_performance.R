@@ -84,9 +84,9 @@ start_time <- Sys.time()
 # Load the best parameters
 lr_filename <- 'logistic_regression_best_parameters.RData'
 lr_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', lr_filename))
-lr_best <- lr_params[[1]]
+lr_best_params <- lr_params[[1]]
 
-lr_indices <- match(strsplit(lr_best[['predictors']], ', ')[[1]], colnames(train))
+lr_indices <- match(strsplit(lr_best_params[['predictors']], ', ')[[1]], colnames(train))
 
 # Train the model
 lr_model <- h2o.glm(x                = lr_indices, 
@@ -124,7 +124,7 @@ start_time <- Sys.time()
 # Load the best parameters
 nn_filename <- 'neural_network_best_parameters.RData'
 nn_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', nn_filename))
-nn_best <- nn_params[[1]]
+nn_best_params <- nn_params[[1]]
 
 # Train the model
 nn_model <- h2o.deeplearning(x              = first_val:last_val, 
@@ -132,9 +132,9 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
                              training_frame = train, 
                              nfolds         = nfolds,
                              seed           = 12345,
-                             activation     = nn_best[['activation']],
-                             hidden         = as.numeric(nn_best[['hidden']]),
-                             rate           = as.numeric(nn_best[['rate']]))
+                             activation     = nn_best_params[['activation']],
+                             hidden         = as.numeric(nn_best_params[['hidden']]),
+                             rate           = as.numeric(nn_best_params[['rate']]))
 
 # Evaluate the trained model
 nn_filepath <- paste0('results/', relative_dir, 'model_performance/neural_network')
@@ -159,7 +159,7 @@ start_time <- Sys.time()
 # Load the best parameters
 rf_filename <- 'random_forest_best_parameters.RData'
 rf_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', rf_filename))
-rf_best <- rf_params[[1]]
+rf_best_params <- rf_params[[1]]
 
 # Train the model
 rf_model <- h2o.randomForest(x              = first_val:last_val, 
@@ -167,8 +167,8 @@ rf_model <- h2o.randomForest(x              = first_val:last_val,
                              training_frame = train, 
                              nfolds         = nfolds,
                              seed           = 12345,
-                             ntrees         = as.numeric(rf_best[['ntrees']]),
-                             mtries         = as.numeric(rf_best[['mtries']]))
+                             ntrees         = as.numeric(rf_best_params[['ntrees']]),
+                             mtries         = as.numeric(rf_best_params[['mtries']]))
 
 # Evaluate the trained model
 rf_filepath <- paste0('results/', relative_dir, 'model_performance/random_forest')
@@ -193,7 +193,7 @@ start_time <- Sys.time()
 # Load the best parameters
 gbm_filename <- 'gradient_boosting_machine_best_parameters.RData'
 gbm_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', gbm_filename))
-gbm_best <- gbm_params[[1]]
+gbm_best_params <- gbm_params[[1]]
 
 # Train the model
 gbm_model <- h2o.gbm(x              = first_val:last_val, 
@@ -201,8 +201,8 @@ gbm_model <- h2o.gbm(x              = first_val:last_val,
                      training_frame = train, 
                      nfolds         = nfolds,
                      seed           = 12345,
-                     ntrees         = as.numeric(gbm_best[['ntrees']]),
-                     max_depth      = as.numeric(gbm_best[['max_depth']]))
+                     ntrees         = as.numeric(gbm_best_params[['ntrees']]),
+                     max_depth      = as.numeric(gbm_best_params[['max_depth']]))
 
 # Evaluate the trained model
 gbm_filepath <- paste0('results/', relative_dir, 'model_performance/gradient_boosting_machine')
@@ -222,6 +222,15 @@ runtimes_in_minutes <- round(c(lr_runtime, nn_runtime, rf_runtime, gbm_runtime),
 results <- data.frame(models, runtimes_in_minutes)
 rt_filepath <- paste0('results/', relative_dir, 'model_performance/runtimes_model_performance.csv')
 if (overwrite) write.csv(results, rt_filepath)
+
+#################################
+#### DECISION CURVE ANALYSIS ####
+#################################
+models_predictions <- list(lr_predictions$p1, nn_predictions$p1, rf_predictions$p1, gbm_predictions$p1)
+model_names <- list('Logistic Regression', 'Neural Network', 'Random Forest', 'Gradient Boosting Machine')
+filepath <- paste0('results/', relative_dir, 'model_performance')
+
+decision_curves(models_predictions, model_names, newdata=validate, filepath=filepath,, x=seq(0, 0.3, 0.001))
 
 ###########################
 #### SELECT BEST MODEL ####
