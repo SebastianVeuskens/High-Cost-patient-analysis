@@ -45,9 +45,9 @@ confidence_interval <- function(value, n, confidence = 0.95) {
 
 # Compute the AUC 
 # TODO: Add documentation here 
-compute_auc <- function(predictions, newdata, label, confidence = 0.95) {
+compute_auc <- function(prediction_probabilities, newdata, label, confidence = 0.95) {
     labels <- as.data.frame(newdata[, label])[[1]]
-    probabilities <- predictions$p1
+    probabilities <- prediction_probabilities
     auc_info <- ci.cvAUC(probabilities, labels, confidence=confidence)
     return(auc_info)
 }
@@ -107,7 +107,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 
     # TODO: Check why I calculated the AUC like this and not with H2O native functions 
     # AUC 
-    auc_info     <- compute_auc(predictions, newdata=newdata, label=target_label)
+    auc_info     <- compute_auc(predictions$p1, newdata=newdata, label=target_label)
     auc          <- auc_info[['cvAUC']]
     interval_auc <- auc_info[['ci']]
 
@@ -135,31 +135,47 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
 evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year') {
-    predictions <- predict(model, newdata)
-    confusion_matrix <- caret::confusionMatrix(as.factor(predictions), newdata[target_label])
+    prediction_probs <- predict(model, newdata, type='prob')[,2]
+    prediction_probs_pos <- prediction_probs[newdata[,target] == 1]
+    prediction_probs_neg <- prediction_probs[newdata[,target] == 0]
 
-    accuracy <- caret::accuracy
-    sensitivity <- caret::sensitivity 
-    specificity <- caret::specificity 
+    gmean <- c()
+    actual <- factor(newdata[,target], levels=c(1, 0))
+    threshold_range <- seq(0, 1, 0.001)
+    for (threshold in threshold_range) {
+        predictions <- factor(as.numeric(prediction_probs >= threshold), levels=c(1, 0))
+        sensitivity <- caret::sensitivity(predictions, actual)
+        specificity <- caret::specificity(predictions, actual)
+        gmean <- c(gmean, sqrt(sensitivity * specificity))
+    }
+    best_threshold_idx <- which.max(gmean)
+    best_threshold <- threshold_range[best_threshold_idx]
+    predictions <- factor(as.numeric(prediction_probs >= best_threshold), levels=c(0, 1))
+
+    confusion_matrix <- caret::confusionMatrix(predictions, actual)
+    accuracy <- confusion_matrix$overall['Accuracy']
+    sensitivity <- caret::sensitivity(predictions, actual)
+    specificity <- caret::specificity(predictions, actual)
     gmean <- sqrt(specificity * sensitivity)
-
+    
     # Cost Capture 
-    # TODO: Check if p1 indexing makes sense here 
-    idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
+    idx_cc_pred      <- which(prediction_probs >= quantile(prediction_probs, 0.95))[1:floor(n * 0.05)]
     idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
     cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
 
     
     # AUC 
-    auc_info     <- compute_auc(predictions, newdata=newdata, label=target_label)
+    auc_info     <- compute_auc(prediction_probs, newdata=newdata, label=target_label)
     auc          <- auc_info[['cvAUC']]
     interval_auc <- auc_info[['ci']]
     
     # Confidence intervals 
+    n <- nrow(newdata) 
     interval_accuracy       <- confidence_interval(accuracy, n)
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
     interval_gmean          <- confidence_interval(gmean, n)
+    # TODO: Compute better confidence interval 
     interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
     
     # Combine the results 
