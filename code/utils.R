@@ -52,6 +52,32 @@ compute_auc <- function(prediction_probabilities, newdata, label, confidence = 0
     return(auc_info)
 }
 
+compute_cc <- function(prediction_probabilities, newdata, target_label, cost_label) {
+    n <- length(prediction_probabilities)
+    # TODO: Check if floor is really appropriate here (changes results only very slightly)
+    idx_cc_pred      <- which(prediction_probabilities >= quantile(prediction_probabilities, 0.95))[1:floor(n * 0.05)]
+    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
+    return(cost_capture)
+}
+
+# Compute the confidence interval for the cost capture
+# TODO: Add documentation here 
+compute_cc_confidence <- function(prediction_probabilities, newdata, target_label, cost_label, B=10000, confidence=0.95) {
+    alpha <- 1 - confidence
+    n <- length(predictions_probabilities)
+    cost_captures <- c()
+    for (i in 1:B) {
+        sample_indeces <- sample(prediction_probabilities, n, replace=TRUE)
+        cur_prediction_probs <- prediction_probabilities[sample_indeces]
+        cur_newdata <- newdata[sample_indeces,]
+        cur_cost_capture <- compute_cc(cur_prediction_probs, cur_newdata, target_label, cost_label)
+    }
+    lower <- quantile(cost_captures, alpha / 2)
+    upper <- quantile(cost_captures, 1 - alpha / 2)
+    return(c(lower, upper))
+}
+
 # Evaluate a trained h2o model 
 #
 # A fully automated evaluation of all different metrics of the specified model
@@ -91,11 +117,6 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     specificity      <-  as.numeric(h2o.specificity (performance, threshold)) 
     gmean            <- gmeans[threshold_index]      
 
-    # TODO: Check if floor is really appropriate here (changes results only very slightly)
-    idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
-    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
-    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
-
     # Confidence intervals 
     interval_auc_h2o        <- confidence_interval(auc_h2o, n)
     interval_aucpr_h2o     <- confidence_interval(aucpr_h2o, n)
@@ -103,7 +124,14 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
     interval_gmean          <- confidence_interval(gmean, n)
-    interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
+
+    # TODO: Check if floor is really appropriate here (changes results only very slightly)
+    # idx_cc_pred      <- which(predictions$p1 >= quantile(predictions$p1, 0.95))[1:floor(n * 0.05)]
+    # idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    # cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
+    cost_capture <- compute_cc(predictions$p1, newdata, target_label, cost_label)
+    # interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
+    interval_cost_capture   <- compute_cc_confidence(predictions$p1, newdata, target_label, cost_label)
 
     # TODO: Check why I calculated the AUC like this and not with H2O native functions 
     # AUC 
@@ -158,11 +186,6 @@ evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='
     specificity <- caret::specificity(predictions, actual)
     gmean <- sqrt(specificity * sensitivity)
     
-    # Cost Capture 
-    idx_cc_pred      <- which(prediction_probs >= quantile(prediction_probs, 0.95))[1:floor(n * 0.05)]
-    idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
-    cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
-
     
     # AUC 
     auc_info     <- compute_auc(prediction_probs, newdata=newdata, label=target_label)
@@ -175,8 +198,14 @@ evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='
     interval_sensitivity    <- confidence_interval(sensitivity, n)
     interval_specificity    <- confidence_interval(specificity, n)
     interval_gmean          <- confidence_interval(gmean, n)
-    # TODO: Compute better confidence interval 
-    interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
+
+    # Cost Capture 
+    # idx_cc_pred      <- which(prediction_probs >= quantile(prediction_probs, 0.95))[1:floor(n * 0.05)]
+    # idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
+    # cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
+    cost_capture <- compute_cc(prediction_probs, newdata, target_label, cost_label)
+    # interval_cost_capture   <- confidence_interval(cost_capture * 0.01, n) * 100
+    interval_cost_capture   <- compute_cc_confidence(prediction_probs, newdata, target_label, cost_label)
     
     # Combine the results 
     measures <- c('accuracy', 'sensitivity', 'specificity', 'gmean', 'auc', 'cost_capture')
