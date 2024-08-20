@@ -17,7 +17,8 @@ filter_hc <- FALSE
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
 balance_hc <- FALSE 
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
-user_model_name <- 'gradient boosting machine'
+# TODO: Change this to NULL at the end 
+user_model_name <- 'random forest'
 # Whether to use H2O package or standard R packages
 use_h2o <- FALSE
 # Whether you want to save your results (and overwrite the old results) or not
@@ -88,9 +89,17 @@ if (overwrite) {
     dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
 }
 
+
 #### LOAD MODEL #### 
+# Specify location to save the model 
 model_name <- gsub(' ', '_', user_model_name) 
-model_filepath <- paste0('results/', relative_dir, 'model_evaluation/', model_name)
+model_filepath <- paste0('results/', relative_dir, 'model_explanation/', model_name)
+
+# Load the best parameters from hyperparameter tuning for the specified model 
+filename_params <- paste0(model_name, '_best_parameters.RData')
+params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+best_params <- params[[1]]
+
 if (use_h2o) {
     # Start H2O package
     h2o.init()
@@ -100,6 +109,7 @@ if (use_h2o) {
     test <- as.h2o(test)
 
     # Load the model 
+    # TODO: Check where I exactly load this here from 
     model <- h2o.loadModel(model_filepath)
     predictions <- as.data.frame(h2o.predict(model, test))
     
@@ -107,10 +117,17 @@ if (use_h2o) {
     if (file.exists(paste0(model_filepath, '.RData'))) {
         model <- readRDS(paste0(model_filepath, '.RData'))
     } else {
-        model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=1000, mtry=30)
-        saveRDS(model, paste0(model_filepath, '.RData'))
+        if (user_model_name == 'random forest') {
+            ntrees <- as.numeric(best_params[['ntrees']])
+            mtries <- as.numeric(best_params[['mtries']])
+            model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=ntrees, mtry=mtries)
+            saveRDS(model, paste0(model_filepath, '.RData'))
+        } else {
+            warning('ONLY RANDOM FOREST IS IMPLEMENTED SO FAR')
+        }
     }
     predictions <- predict(model, test)$predict
+    evaluate_r_model(model, paste0(model_filepath, '_performance'), overwrite, test)
 }
 
 ###############################################################
