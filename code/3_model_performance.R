@@ -4,7 +4,7 @@
 # File: 3_model_performance.R
 # Author: Sebastian Benno Veuskens 
 # Date: 2024-05-10
-# Data: Use the train data set for training and the validate data set for evaluation. 
+# Data: Use the train or train_validate data set for training and the validate or test data set for evaluation. 
 #
 # This script performs model training and evaluation.
 # The best models for each model type are used according to the grid parameter search (see 2_model_tuning.R).
@@ -23,6 +23,8 @@ nfolds <- 5
 measure <- 'auc'
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
+# Indicate whether to retrieve performance or validation (one of 'validation' or 'performance')
+scheme <- 'performance'
 #### MODIFY END ####
 
 #######################
@@ -46,22 +48,35 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 # Indicate from which relative location to load & save from. Depends on user input. 
 relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
 
-load(paste0('data/', relative_dir, 'train',    '.Rdata'))
-load(paste0('data/', relative_dir, 'validate', '.Rdata'))
+if (scheme == 'performance') {
+    load(paste0('data/', relative_dir, 'train',    '.Rdata'))
+    load(paste0('data/', relative_dir, 'validate', '.Rdata'))
+    train_data <- train
+    test_data <- validate
+} else if (scheme == 'validation') {
+    load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
+    load(paste0('data/', relative_dir, 'test', '.Rdata'))
+    train_data <- train_validate
+    test_data <- test
+}
 
 # Start H2O package
 h2o.init()
 
 # Load data frames into H2O framework
-train <- as.h2o(train)
-validate <- as.h2o(validate)
+train_data <- as.h2o(train_data)
+test_data <- as.h2o(test_data)
 
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_performance'), showWarnings=FALSE)
+    if (scheme == 'performance') {
+        dir.create(paste0('results/', relative_dir, 'model_performance'), showWarnings=FALSE)
+    } else if (scheme == 'validation') {
+        dir.create(paste0('results/', relative_dir, 'model_validation'), showWarnings=FALSE)
+    }
 }
 
 ##################################################################
@@ -71,7 +86,7 @@ if (overwrite) {
 # Position of label and variables. Indicate where the features for prediction should start and end in the data.
 label_pos <- 1 
 first_val <- 3
-last_val <- ncol(train)
+last_val <- ncol(train_data)
 
 
 #############################
@@ -86,12 +101,12 @@ lr_filename <- 'logistic_regression_best_parameters.RData'
 lr_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', lr_filename))
 lr_best_params <- lr_params[[1]]
 
-lr_indices <- match(strsplit(lr_best_params[['predictors']], ', ')[[1]], colnames(train))
+lr_indices <- match(strsplit(lr_best_params[['predictors']], ', ')[[1]], colnames(train_data))
 
 # Train the model
 lr_model <- h2o.glm(x                = lr_indices, 
                     y                = label_pos,
-                    training_frame   = train,  
+                    training_frame   = train_data,  
                     nfolds           = nfolds,
                     seed             = 12345,
                     calc_like        = TRUE,
@@ -100,13 +115,13 @@ lr_model <- h2o.glm(x                = lr_indices,
 
 # Evaluate the trained model
 lr_filepath <- paste0('results/', relative_dir, 'model_performance/logistic_regression')
-lr_performance <- evaluate_model(lr_model, lr_filepath, overwrite, newdata=validate)
+lr_performance <- evaluate_model(lr_model, lr_filepath, overwrite, newdata=test_data)
 
 # Save the coefficients of the model 
 save_lr_coefs(lr_model, lr_filepath)
 
 # Get predictions of the model
-lr_predictions <- h2o.predict(lr_model, newdata=validate)
+lr_predictions <- h2o.predict(lr_model, newdata=test_data)
 
 # Display the runtime
 end_time <- Sys.time() 
@@ -129,7 +144,7 @@ nn_best_params <- nn_params[[1]]
 # Train the model
 nn_model <- h2o.deeplearning(x              = first_val:last_val, 
                              y              = label_pos,
-                             training_frame = train, 
+                             training_frame = train_data, 
                              nfolds         = nfolds,
                              seed           = 12345,
                              activation     = nn_best_params[['activation']],
@@ -138,10 +153,10 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
 
 # Evaluate the trained model
 nn_filepath <- paste0('results/', relative_dir, 'model_performance/neural_network')
-nn_performance <- evaluate_model(nn_model, nn_filepath, overwrite, newdata=validate)
+nn_performance <- evaluate_model(nn_model, nn_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
-nn_predictions <- h2o.predict(nn_model, newdata=validate)
+nn_predictions <- h2o.predict(nn_model, newdata=test_data)
 
 # Display the runtime
 end_time <- Sys.time() 
@@ -164,7 +179,7 @@ rf_best_params <- rf_params[[1]]
 # Train the model
 rf_model <- h2o.randomForest(x              = first_val:last_val, 
                              y              = label_pos,
-                             training_frame = train, 
+                             training_frame = train_data, 
                              nfolds         = nfolds,
                              seed           = 12345,
                              ntrees         = as.numeric(rf_best_params[['ntrees']]),
@@ -172,10 +187,10 @@ rf_model <- h2o.randomForest(x              = first_val:last_val,
 
 # Evaluate the trained model
 rf_filepath <- paste0('results/', relative_dir, 'model_performance/random_forest')
-rf_performance <- evaluate_model(rf_model, rf_filepath, overwrite, newdata=validate)
+rf_performance <- evaluate_model(rf_model, rf_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
-rf_predictions <- h2o.predict(rf_model, newdata=validate)
+rf_predictions <- h2o.predict(rf_model, newdata=test_data)
 
 # Display the runtime
 end_time <- Sys.time() 
@@ -198,7 +213,7 @@ gbm_best_params <- gbm_params[[1]]
 # Train the model
 gbm_model <- h2o.gbm(x              = first_val:last_val, 
                      y              = label_pos,
-                     training_frame = train, 
+                     training_frame = train_data, 
                      nfolds         = nfolds,
                      seed           = 12345,
                      ntrees         = as.numeric(gbm_best_params[['ntrees']]),
@@ -206,10 +221,10 @@ gbm_model <- h2o.gbm(x              = first_val:last_val,
 
 # Evaluate the trained model
 gbm_filepath <- paste0('results/', relative_dir, 'model_performance/gradient_boosting_machine')
-gbm_performance <- evaluate_model(gbm_model, gbm_filepath, overwrite, newdata=validate)
+gbm_performance <- evaluate_model(gbm_model, gbm_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
-gbm_predictions <- h2o.predict(gbm_model, newdata=validate)
+gbm_predictions <- h2o.predict(gbm_model, newdata=test_data)
 
 # Display the runtime
 end_time <- Sys.time() 
@@ -230,7 +245,7 @@ models_predictions <- list(lr_predictions$p1, nn_predictions$p1, rf_predictions$
 model_names <- list('Logistic Regression', 'Neural Network', 'Random Forest', 'Gradient Boosting Machine')
 filepath <- paste0('results/', relative_dir, 'model_performance')
 
-decision_curves(models_predictions, model_names, newdata=validate, filepath=filepath,, x=seq(0, 0.3, 0.001))
+decision_curves(models_predictions, model_names, newdata=test_data, filepath=filepath,, x=seq(0, 0.3, 0.001))
 
 ###########################
 #### SELECT BEST MODEL ####
@@ -239,7 +254,7 @@ decision_curves(models_predictions, model_names, newdata=validate, filepath=file
 # Combine all model results and parameters 
 model_names <- c('logistic regression', 'neural network', 'random forest', 'gradient boosting machine')
 model_results <- setNames(list(lr_performance, nn_performance, rf_performance, gbm_performance), model_names)
-model_parameters <- setNames(list(NULL, unlist(nn_best), unlist(rf_best), unlist(gbm_best)), model_names)
+model_parameters <- setNames(list(NULL, unlist(nn_best_params), unlist(rf_best_params), unlist(gbm_best_params)), model_names)
 model_predictions <- setNames(list(lr_predictions, nn_predictions, rf_predictions, gbm_predictions), model_names)
 
 # Determine the order of the models, according to their auc
@@ -266,8 +281,8 @@ print(best_model)
 
 # Use the save_list function from utils.R file 
 if (overwrite) {
-    om_filepath <- paste0('results/', relative_dir, 'model_performance/ordered_models')
-    bm_filepath <- paste0('results/', relative_dir, 'model_performance/best_model')
+    om_filepath <- paste0('results/', relative_dir, 'model_', scheme ,'/ordered_models')
+    bm_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/best_model')
     save_list(ordered_models, om_filepath)
     save_list(best_model, bm_filepath)
 }
