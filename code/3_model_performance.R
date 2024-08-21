@@ -24,7 +24,7 @@ measure <- 'auc'
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 # Indicate whether to retrieve performance or validation (one of 'validation' or 'performance')
-scheme <- 'performance'
+scheme <- 'validation'
 #### MODIFY END ####
 
 #######################
@@ -72,11 +72,7 @@ if (overwrite) {
     dir.create('results', showWarnings=FALSE)
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    if (scheme == 'performance') {
-        dir.create(paste0('results/', relative_dir, 'model_performance'), showWarnings=FALSE)
-    } else if (scheme == 'validation') {
-        dir.create(paste0('results/', relative_dir, 'model_validation'), showWarnings=FALSE)
-    }
+    dir.create(paste0('results/', relative_dir, 'model_', scheme), showWarnings=FALSE)
 }
 
 ##################################################################
@@ -283,6 +279,11 @@ print(best_model)
 if (overwrite) {
     om_filepath <- paste0('results/', relative_dir, 'model_', scheme ,'/ordered_models')
     bm_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/best_model')
+    mf_filepath <- paste0('results/', relative_dir, 'model_', scheme)
     save_list(ordered_models, om_filepath)
     save_list(best_model, bm_filepath)
+    h2o.saveModel(lr_model, mf_filepath, filename='model_files_linear_regression', force=TRUE)
+    h2o.saveModel(nn_model, mf_filepath, filename='model_files_neural_network', force=TRUE)
+    h2o.saveModel(rf_model, mf_filepath, filename='model_files_random_forest', force=TRUE)
+    h2o.saveModel(gbm_model, mf_filepath, filename='model_files_gradient_boosting_machine', force=TRUE)
 }
