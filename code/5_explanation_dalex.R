@@ -19,8 +19,6 @@ balance_hc <- FALSE
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
 # TODO: Change this to NULL at the end 
 user_model_name <- 'random forest'
-# Whether to use H2O package or standard R packages
-use_h2o <- FALSE
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 # Target variable
@@ -45,7 +43,6 @@ feature_of_interest <- 'Age'
 
 # INSTALL LIBRARIES 
 # install.packages("dplyr")
-# install.packages("h2o")
 # install.packages('randomForest')
 # install.packages("pdp")               
 # install.packages("shapper")  
@@ -60,7 +57,6 @@ feature_of_interest <- 'Age'
 
 # LOAD LIBRARIES & SOURCES
 library(dplyr)          # To bind two data frames (predictions and labels) together 
-library(h2o)            # The modelling framework 
 library(randomForest)   # For the random Forest in R
 library(pdp)            # PDP 
 library(shapper)        # SHAP 
@@ -104,37 +100,22 @@ filename_params <- paste0(model_name, '_best_parameters.RData')
 params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
 best_params <- params[[1]]
 
-if (use_h2o) {
-    # Start H2O package
-    h2o.init()
-
-    # Load data frames into H2O framework
-    train_validate <- as.h2o(train_validate)
-    test <- as.h2o(test)
-
-    # Load the model 
-    # TODO: Check where I exactly load this here from 
-    model <- h2o.loadModel(model_filepath)
-    predictions <- as.data.frame(h2o.predict(model, test))
-    
+excluded_idx <- which(names(test) == excluded)
+if (file.exists(paste0(model_filepath, '.RData'))) {
+    model <- readRDS(paste0(model_filepath, '.RData'))
 } else {
-    excluded_idx <- which(names(test) == excluded)
-    if (file.exists(paste0(model_filepath, '.RData'))) {
-        model <- readRDS(paste0(model_filepath, '.RData'))
+    if (user_model_name == 'random forest') {
+        ntrees <- as.numeric(best_params[['ntrees']])
+        mtries <- as.numeric(best_params[['mtries']])
+        model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-excluded_idx], ntree=ntrees, mtry=mtries)
+        model$cutoff <- evaluate_r_model(model, model_filepath, overwrite, newdata=test[,-excluded_idx])[[1]]
+        saveRDS(model, paste0(model_filepath, '.RData'))
     } else {
-        if (user_model_name == 'random forest') {
-            ntrees <- as.numeric(best_params[['ntrees']])
-            mtries <- as.numeric(best_params[['mtries']])
-            model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-excluded_idx], ntree=ntrees, mtry=mtries)
-            model$cutoff <- evaluate_r_model(model, model_filepath, overwrite, newdata=test[,-excluded_idx])[[1]]
-            saveRDS(model, paste0(model_filepath, '.RData'))
-        } else {
-            warning('ONLY RANDOM FOREST IS IMPLEMENTED SO FAR')
-        }
+        warning('ONLY RANDOM FOREST IS IMPLEMENTED SO FAR')
     }
-    prediction_probs <- predict(model, test[,-excluded_idx], type='prob')[,2]
-    predictions <- as.numeric(prediction_probs >= model$cutoff)
 }
+prediction_probs <- predict(model, test[,-excluded_idx], type='prob')
+predictions <- as.numeric(prediction_probs >= model$cutoff)
 
 ###############################################################
 ##################### XAI METHODS #############################
@@ -181,11 +162,7 @@ if (user_model_name == 'logistic regression') {
     predictors <- setdiff(names(test), c(target, excluded))
 }
 
-if (use_h2o) {
-    exp_dalex <- DALEXtra::explain_h2o(model, data = train_validate_df[,predictors], y=train_validate_df[target])
-} else {
-    exp_dalex <- DALEX::explain(model, data=train_validate_df[,predictors], y=train_validate_df[target])
-}
+exp_dalex <- DALEX::explain(model, data=train_validate_df[,predictors], y=train_validate_df[target])
 
 #############################
 #### VARIABLE IMPORTANCE ####

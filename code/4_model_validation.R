@@ -16,12 +16,21 @@ setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-C
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
 balance_hc <- FALSE 
+# Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
+# TODO: Change this to NULL at the end 
+user_model_name <- 'random forest'
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
+# Whether to use a patient that was actually is positive or negative
+use_pos <- TRUE 
+# Whether to use a patient that is predicted positive or negative
+use_true <- TRUE
 # Number of variables to display in variable importance plot
 num_vars <- 5
 # Number of features to display in SHAP analysis plot
 num_features <- 5
+# Specify which feature to investigate better 
+feature_of_interest <- 'Age'
 #### MODIFY END ####
 
 
@@ -52,20 +61,19 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 # Indicate from which relative location to load & save from. Depends on user input. 
 relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
 
-load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
 load(paste0('data/', relative_dir, 'test', '.Rdata'))
 
 # Start H2O package
 h2o.init()
 
-# Load data frames into H2O framework
-train_validate <- as.h2o(train_validate)
+# Load test data frame into H2O framework
+test_df <- test
 test <- as.h2o(test)
 
-# Load the best model identified in the model selection (see 3_model_performance.R) or the user-specified model
-filename_params <- paste0('random_forest_best_parameters.RData')
-params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
-best_params <- params[[1]]
+# # Load the best model identified in the model selection (see 3_model_performance.R) or the user-specified model
+# filename_params <- paste0('random_forest_best_parameters.RData')
+# params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+# best_params <- params[[1]]
 
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
@@ -83,9 +91,14 @@ if (overwrite) {
 # Position of label and variables. Indicate where the features for prediction should start and end in the data.
 label_pos <- 1 
 first_val <- 3
-last_val <- ncol(train_validate)
+last_val <- ncol(test)
 
 #### LOAD MODEL ####
+model_name <- gsub(' ', '_', user_model_name) 
+model_filepath <- paste0('results/', relative_dir, 'model_validation/model_files_', model_name)
+# TODO: Delete this after I ran model_validation 
+# model_filepath <- paste0('results/', relative_dir, 'model_explanation/model_files_', model_name)
+model <- h2o.loadModel(model_filepath)
 
 # # Train the model. Use the train_model function from the utils.R file
 # model <- train_model(model_params, train_validate, first_val, last_val, label_pos)
@@ -94,84 +107,59 @@ last_val <- ncol(train_validate)
 # # Exchange tabs with underscore for consistent file naming (to correct user input).  
 # h2o.saveModel(model, paste0('results/', relative_dir, 'model_validation'), filename='random_forest', force=TRUE)
 
+# Find model threshold
+performance     <- h2o.performance(model, newdata = test)
+sensitivities   <- h2o.sensitivity(performance)
+specificities   <- h2o.specificity(performance)
+gmeans          <- sqrt(sensitivities$tpr * specificities$tnr)
+threshold_index <- which.max(gmeans)
+threshold       <- sensitivities[threshold_index, 'threshold']
 
-#####################################
-#### STANDARD EVALUATION METRICS ####
-#####################################
-
-# Evaluate the model using the standard metrics. Use the evaluate_model function from the utils.R file
-filepath <- paste0('results/', relative_dir, 'model_validation/random_forest')
-results <- evaluate_model(model, filepath, overwrite, newdata=test)
-
-
-############################
-#### PERFORMANCE CURVES ####
-############################
-
-# Bind the predicted and true labels together 
-predictions <- as.data.frame(h2o.predict(model, test))
-label <- as.data.frame(test)$HC_Patient_Next_Year
-predicted_vs_true <- bind_cols(predictions, label=label)
-# Get the prediction probabilities for each class 
-class_1_probabilities <- predicted_vs_true$p1[predicted_vs_true$label == 1]
-class_0_probabilities <- predicted_vs_true$p1[predicted_vs_true$label == 0]
-
-# Receiver Operating Characteristic (ROC) curve 
-roc <- roc.curve(class_1_probabilities, class_0_probabilities, curve=TRUE)
-aucroc <- roc$auc
-# Display and save the ROC curve 
-print(paste('ROC Area under the curve (AUC):', round(aucroc, 4)))
-plot(roc)
-if (overwrite) {
-    png(paste0(filepath, '_roc_curve.png'))
-    plot(roc)
-    dev.off() 
-}
-
-# Precision-Recall curve
-# TODO: Check if this gives the same results as the pr-curve in Benedikts script
-# TODO: Run h2o.aucpr in Benedikt script to see if he gets such low results there too 
-pr <- pr.curve(class_1_probabilities, class_0_probabilities, curve=TRUE)
-aucpr <- pr$auc.integral
-# Display and save the Precision-Recall curve 
-print(paste('Precision-Recall Area under the curve (AUC):', round(aucpr, 4)))
-plot(pr)
-if (overwrite) {
-    png(paste0(filepath, '_precision_recall_curve.png'))
-    plot(pr)
-    dev.off() 
-}
-
-# Validate results by comparing the AUC with the Precision-Recall AUC of the h2o built-in function. 
-aucpr_h2o <- h2o.aucpr(h2o.performance(model, test))
-aucpr_match <- isTRUE(all.equal(aucpr, aucpr_h2o, tolerance=0.1))
-if (!aucpr_match) {
-    print('EXCEPTON: CHECK PRECISION-RECALL COMPUTATION!')
-}
-
-# Confusion matrix
-conf_matrix <- confusionMatrix(predicted_vs_true$predict, predicted_vs_true$label)
-print(conf_matrix$table)
-
+prediction_matrix <- h2o.predict(model, newdata=test)
+predictions <- as.numeric(prediction_matrix$p1 >= threshold)
 
 #####################
 #### XAI METHODS ####
-##################### 
+#####################
+
+true_hcp_status <- as.numeric(test_df$HC_Patient_Next_Year) - 1 == use_true
+predicted_hcp_status <- as.data.frame(predictions) == use_pos
+sample_indices <- which(true_hcp_status & predicted_hcp_status)
+sample_idx <- sample_indices[1]
+sample <- test[sample_idx,]
+predictions[sample_idx]
+
+# Specifiy where to save the results
+result_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o')
+
+# exp_global_h2o <- h2o.explain(model, test[1:1000,])
+# exp_local_h2o <- h2o.explain(model, test, row_index=sample_idx)
 
 # Variable importance
 # Display and save the variable importance plot 
-varimp_plot <- h2o.varimp_plot(model, num_of_features=num_vars)
-if (overwrite) {
-    png(paste0(filepath, '_variable_importance.png'))
-    h2o.varimp_plot(model, num_of_features=num_vars)
-    dev.off()
-}
+if (overwrite) {png(paste0(result_filepath, '_variable_importance.png'))}
+h2o.varimp_plot(model, num_of_features=num_vars)
+if (overwrite) {dev.off()}
 
 # SHAP analysis 
-# Display and save the SHAP analysis plot
-shap <- h2o.shap_summary_plot(model, newdata = test, top_n_features = num_features)
-if (overwrite) {
-    png(paste0(filepath, '_shap_analysis.png'))
-    shap <- h2o.shap_summary_plot(model, newdata = test, top_n_features = num_features)
-    dev.off()
-}
+# Display and save the SHAP summary analysis plot
+if (overwrite) {png(paste0(result_filepath, 'shap_summary_analysis.png'))}
+h2o.shap_summary_plot(model, newdata = test, top_n_features = num_features)
+if (overwrite) {dev.off()}
+
+# Display and save the SHAP local explanation plot 
+if (overwrite) {png(paste0(result_filepath, '_shap_local_analysis.png'))}
+h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx)
+if (overwrite) {dev.off()}
+
+
+# Partial Dependence Plot 
+if (overwrite) {png(paste0(result_filepath, '_pdp.png'))}
+h2o.pd_plot(model, newdata = test)
+if (overwrite) {dev.off()}
+
+
+# Individual Conditional Expectations Plot 
+if (overwrite) {png(paste0(result_filepath, '_ice.png'))}
+h2o.ice_plot(model, newdata = test, feature_of_interest)
+if (overwrite) {dev.off()}
