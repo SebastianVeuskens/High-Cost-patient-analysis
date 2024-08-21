@@ -33,6 +33,8 @@ use_pos <- TRUE
 use_true <- TRUE
 # Specify the number of features you want to include in the LIME surrogate model  
 n_features <- 2
+# Specify which feature to investigate better 
+feature_of_interest <- 'Age'
 #### MODIFY END ####
 
 #######################
@@ -116,20 +118,21 @@ if (use_h2o) {
     predictions <- as.data.frame(h2o.predict(model, test))
     
 } else {
+    excluded_idx <- which(names(test) == excluded)
     if (file.exists(paste0(model_filepath, '.RData'))) {
         model <- readRDS(paste0(model_filepath, '.RData'))
     } else {
         if (user_model_name == 'random forest') {
             ntrees <- as.numeric(best_params[['ntrees']])
             mtries <- as.numeric(best_params[['mtries']])
-            model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-2], ntree=ntrees, mtry=mtries)
-            model$cutoff <- evaluate_r_model(model, model_filepath, overwrite, newdata=test[,-2])[[1]]
+            model <- randomForest(formula = HC_Patient_Next_Year ~ ., data=train_validate[,-excluded_idx], ntree=ntrees, mtry=mtries)
+            model$cutoff <- evaluate_r_model(model, model_filepath, overwrite, newdata=test[,-excluded_idx])[[1]]
             saveRDS(model, paste0(model_filepath, '.RData'))
         } else {
             warning('ONLY RANDOM FOREST IS IMPLEMENTED SO FAR')
         }
     }
-    prediction_probs <- predict(model, test[,-2], type='prob')
+    prediction_probs <- predict(model, test[,-excluded_idx], type='prob')[,2]
     predictions <- as.numeric(prediction_probs >= model$cutoff)
 }
 
@@ -144,8 +147,8 @@ if (use_h2o) {
 # Select samples
 test_df <- as.data.frame(test)
 train_validate_df <- as.data.frame(train_validate)
-test_df$HC_Patient_Next_Year <- as.numeric(test_df$HC_Patient_Next_Year)
-train_validate_df$HC_Patient_Next_Year <- as.numeric(train_validate_df$HC_Patient_Next_Year)
+test_df$HC_Patient_Next_Year <- as.numeric(test_df$HC_Patient_Next_Year) - 1
+train_validate_df$HC_Patient_Next_Year <- as.numeric(train_validate_df$HC_Patient_Next_Year) - 1
 
 true_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 1,]
 false_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 0,]
@@ -177,32 +180,33 @@ if (user_model_name == 'logistic regression') {
 } else {
     predictors <- setdiff(names(test), c(target, excluded))
 }
-feature_of_interest <- 'Age'
 
 if (use_h2o) {
-    exp_dalex <- DALEXtra::explain_h2o(model, data = train_validate_df[predictors], y=train_validate_df[target])
+    exp_dalex <- DALEXtra::explain_h2o(model, data = train_validate_df[,predictors], y=train_validate_df[target])
 } else {
-    exp_dalex <- DALEX::explain(model, data=train_validate_df[predictors], y=train_validate_df[target])
+    exp_dalex <- DALEX::explain(model, data=train_validate_df[,predictors], y=train_validate_df[target])
 }
 
-##########################
-#### BREAK-DOWN PLOTS ####
-##########################
-# CHARACTERISTIC: Uses different order of explanatory covariates to calculate feature attribution
+#############################
+#### VARIABLE IMPORTANCE ####
+#############################
+# CHARACTERISTIC: Ranking depends on the order of the variables, therefore permutations
+#                 Loss function has to be specified: Here cross_entropy (binary classification problem)
 
 # Start time measurement 
-bd_start <- Sys.time()
+vi_start <- Sys.time()
 
-bd_dalex <- predict_parts(explainer=exp_dalex,
-                          new_observation=sample,
-                          type='break_down_interactions')
+vi_dalex <- model_parts(explainer=exp_dalex,
+                        # loss_function=loss_cross_entropy,
+                        B=1,
+                        type='difference')
 
-plot(bd_dalex)
+plot(vi_dalex)
 
 # Stop and report time
-bd_end <- Sys.time()
-bd_runtim <- difftime(bd_end, bd_start, units='mins')
-print(paste0('Runtime for break-down plots: ', round(bd_runtime, 2), ' minutes'))
+vi_end <- Sys.time()
+vi_runtim <- difftime(vi_end, vi_start, units='mins')
+print(paste0('Runtime for break-down plots: ', round(vi_runtime, 2), ' minutes'))
 
 ##############
 #### SHAP ####
