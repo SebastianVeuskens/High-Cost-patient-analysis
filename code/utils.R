@@ -100,7 +100,7 @@ compute_cc_confidence <- function(prediction_probabilities, newdata, target_labe
 # @params filepath The filepath and name to save the results 
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
-evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=1000){
+evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=10000){
     # Use the G-Mean score of sensitivity and specificity to determine the optimal cutoff threshold 
     # xval indicates that we want to receive the results of cross-validation -> Use only if no newdata is provided
     xval = is.null(newdata)
@@ -170,7 +170,7 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 # @params filepath The filepath and name to save the results 
 # @params overwrite Indicator whether to save the results 
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
-evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=1000) {
+evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=10000) {
     prediction_probs <- predict(model, newdata, type='prob')[,2]
     prediction_probs_pos <- prediction_probs[newdata[,target] == 1]
     prediction_probs_neg <- prediction_probs[newdata[,target] == 0]
@@ -186,7 +186,7 @@ evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='
     }
     best_threshold_idx <- which.max(gmean)
     best_threshold <- threshold_range[best_threshold_idx]
-    predictions <- factor(as.numeric(prediction_probs >= best_threshold), levels=c(0, 1))
+    predictions <- factor(as.numeric(prediction_probs >= best_threshold), levels=c(1, 0))
 
     confusion_matrix <- caret::confusionMatrix(predictions, actual)
     accuracy <- confusion_matrix$overall['Accuracy']
