@@ -18,8 +18,6 @@ filter_hc <- FALSE
 balance_hc <- FALSE 
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
-# Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_performance.R).
-user_model_name <- 'neural network'
 # Number of variables to display in variable importance plot
 num_vars <- 5
 # Number of features to display in SHAP analysis plot
@@ -65,23 +63,16 @@ train_validate <- as.h2o(train_validate)
 test <- as.h2o(test)
 
 # Load the best model identified in the model selection (see 3_model_performance.R) or the user-specified model
-if (is.null(user_model_name)) {
-    model_params <- list.load(paste0('results/', relative_dir, 'model_performance/best_model.RData'))
-} else {
-    ordered_models <- list.load(paste0('results/', relative_dir, 'model_performance/ordered_models.RData'))
-    # Select the model as specified by the user. 
-    # First, identify the index of the specified model in the ordered_models object.
-    model_ind <- which(ordered_models[[1]] == user_model_name) 
-    # Second, extract the model at the index model_ind from the ordered_models object that contains all model parameters. 
-    model_params <- lapply(ordered_models, function(model) {model[[model_ind]]})
-}
+filename_params <- paste0('random_forest_best_parameters.RData')
+params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+best_params <- params[[1]]
 
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_validation'), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
 }
 
 
@@ -94,13 +85,14 @@ label_pos <- 1
 first_val <- 3
 last_val <- ncol(train_validate)
 
-# Train the model. Use the train_model function from the utils.R file
-model <- train_model(model_params, train_validate, first_val, last_val, label_pos)
+#### LOAD MODEL ####
 
-# Save the model
-# Exchange tabs with underscore for consistent file naming (to correct user input).  
-model_name <- gsub(' ', '_', model_params[[1]])
-h2o.saveModel(model, paste0('results/', relative_dir, 'model_validation'), filename=model_name, force=TRUE)
+# # Train the model. Use the train_model function from the utils.R file
+# model <- train_model(model_params, train_validate, first_val, last_val, label_pos)
+
+# # Save the model
+# # Exchange tabs with underscore for consistent file naming (to correct user input).  
+# h2o.saveModel(model, paste0('results/', relative_dir, 'model_validation'), filename='random_forest', force=TRUE)
 
 
 #####################################
@@ -108,7 +100,7 @@ h2o.saveModel(model, paste0('results/', relative_dir, 'model_validation'), filen
 #####################################
 
 # Evaluate the model using the standard metrics. Use the evaluate_model function from the utils.R file
-filepath <- paste0('results/', relative_dir, 'model_validation/', model_name)
+filepath <- paste0('results/', relative_dir, 'model_validation/random_forest')
 results <- evaluate_model(model, filepath, overwrite, newdata=test)
 
 
