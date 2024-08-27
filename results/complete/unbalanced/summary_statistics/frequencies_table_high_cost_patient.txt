@@ -1,0 +1,43 @@
+[1] "HUMAN READABLE FORMAT: FOR INFORMATION PURPOSES ONLY."
+$`N = `
+# A tibble: 1 × 2
+    `0`   `1`
+  <int> <int>
+1 99080  5216
+
+$Sex
+# A tibble: 2 × 4
+  Sex     `0`   `1` p_value
+  <chr> <int> <int>   <dbl>
+1 m     47956  2413   0.003
+2 w     51124  2803   0.003
+
+$`Age groups`
+# A tibble: 4 × 4
+  Age_groups   `0`   `1` p_value
+  <chr>      <int> <int>   <dbl>
+1 0-30       32768   473       0
+2 30-65      51803  2651       0
+3 65-80      11471  1467       0
+4 >80         3038   625       0
+
+$`Average age (years)`
+       0      1 p_value
+1 41.049 58.254       0
+
+$`Current HC patient`
+# A tibble: 2 × 4
+  HC_Patient   `0`   `1` p_value
+       <int> <int> <int>   <dbl>
+1          0 96026  3054       0
+2          1  3054  2162       0
+
+[[6]]
+                                                       0       1       p_value
+[1,] "Average need of care duration "                  0.109   0.55    0      
+[2,] "Average DMP duration "                           0.675   2.387   0      
+[3,] "Average total costs "                            1362.19 11536.3 0      
+[4,] "Average inpatient number of diagnoses (years) "  0.474   2.691   0      
+[5,] "Average outpatient number of diagnoses (years) " 29.596  74.517  0      
+[6,] "Average number of prescriptions (years) "        6.863   24.121  0      
+
