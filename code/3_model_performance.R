@@ -110,7 +110,7 @@ lr_model <- h2o.glm(x                = lr_indices,
                     )
 
 # Evaluate the trained model
-lr_filepath <- paste0('results/', relative_dir, 'model_performance/logistic_regression')
+lr_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/logistic_regression')
 lr_performance <- evaluate_model(lr_model, lr_filepath, overwrite, newdata=test_data)
 
 # Save the coefficients of the model 
@@ -148,7 +148,7 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
                              rate           = as.numeric(nn_best_params[['rate']]))
 
 # Evaluate the trained model
-nn_filepath <- paste0('results/', relative_dir, 'model_performance/neural_network')
+nn_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/neural_network')
 nn_performance <- evaluate_model(nn_model, nn_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -182,7 +182,7 @@ rf_model <- h2o.randomForest(x              = first_val:last_val,
                              mtries         = as.numeric(rf_best_params[['mtries']]))
 
 # Evaluate the trained model
-rf_filepath <- paste0('results/', relative_dir, 'model_performance/random_forest')
+rf_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/random_forest')
 rf_performance <- evaluate_model(rf_model, rf_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -216,7 +216,7 @@ gbm_model <- h2o.gbm(x              = first_val:last_val,
                      max_depth      = as.numeric(gbm_best_params[['max_depth']]))
 
 # Evaluate the trained model
-gbm_filepath <- paste0('results/', relative_dir, 'model_performance/gradient_boosting_machine')
+gbm_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/gradient_boosting_machine')
 gbm_performance <- evaluate_model(gbm_model, gbm_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -231,7 +231,7 @@ print(paste0('Runtime gradient boosting machine: ', round(gbm_runtime, 2), ' min
 models <- c('logistic regression', 'neural network', 'random forest', 'gradient boosting machine')
 runtimes_in_minutes <- round(c(lr_runtime, nn_runtime, rf_runtime, gbm_runtime), 4)
 results <- data.frame(models, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_performance/runtimes_model_performance.csv')
+rt_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/runtimes_model_', scheme, '.csv')
 if (overwrite) write.csv(results, rt_filepath)
 
 #################################
@@ -239,7 +239,7 @@ if (overwrite) write.csv(results, rt_filepath)
 #################################
 models_predictions <- list(lr_predictions$p1, nn_predictions$p1, rf_predictions$p1, gbm_predictions$p1)
 model_names <- list('Logistic Regression', 'Neural Network', 'Random Forest', 'Gradient Boosting Machine')
-filepath <- paste0('results/', relative_dir, 'model_performance')
+filepath <- paste0('results/', relative_dir, 'model_', scheme)
 
 decision_curves(models_predictions, model_names, newdata=test_data, filepath=filepath,, x=seq(0, 0.3, 0.001))
 

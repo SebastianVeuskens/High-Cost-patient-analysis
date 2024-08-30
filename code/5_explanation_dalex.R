@@ -4,10 +4,9 @@
 # File: 5_explanation_dalex.R
 # Author: Sebastian Benno Veuskens 
 # Date: 2024-07-10
-# Data: Create a small data set with simple relations. 
+# Data: 
 #
-# The purpose of this script is to create a model that is easy to debug.
-# The model will be used for proof-of-concepts of the explanation methods. 
+# The purpose of this script is to 
 
 #### MODIFY ####
 # Your working directory 
@@ -359,3 +358,5 @@ runtimes_in_minutes <- round(c(bd_runtime, shap_runtime, lime_runtime, locModel_
 results <- data.frame(methods, runtimes_in_minutes)
 rt_filepath <- paste0('results/', relative_dir, 'model_explanation/runtimes_methods.csv')
 if (overwrite) write.csv(results, rt_filepath)
+
+# TODO: Add methods from inTrees

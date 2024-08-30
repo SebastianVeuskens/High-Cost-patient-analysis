@@ -40,12 +40,12 @@ center_func_label <- 'mean'
 # install.packages('glue')
 
 # LOAD LIBRARIES & SOURCES
-library('tidyr')        # Auxiliary tools for frequency tables 
-library('dplyr')        # Auxiliary tools for frequency tables  
-library('ggplot2')      # To visualize the plot 
-library('ggthemes')     # A better style for the plot visualization
-library('scales')       # For logarithmic scaling of the plot
-library('glue')         # For dynamic plot labels 
+library(tidyr)          # Auxiliary tools for frequency tables 
+library(dplyr)          # Auxiliary tools for frequency tables  
+library(ggplot2)        # To visualize the plot 
+library(ggthemes)       # A better style for the plot visualization
+library(scales)         # For logarithmic scaling of the plot
+library(glue)           # For dynamic plot labels 
 source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
 
 #### LOAD DATA ####
