@@ -86,13 +86,14 @@ if (overwrite) {
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir, 'model_explanation/dalex'), showWarnings=FALSE)
 }
 
 
 #### LOAD MODEL #### 
 # Specify location to save the model 
 model_name <- gsub(' ', '_', user_model_name) 
-model_filepath <- paste0('results/', relative_dir, 'model_explanation/', model_name)
+model_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/', model_name)
 
 # Load the best parameters from hyperparameter tuning for the specified model 
 filename_params <- paste0(model_name, '_best_parameters.RData')
@@ -356,7 +357,7 @@ methods <- c('Break-down plot', 'SHAP', 'LIME', 'Local Model',
 runtimes_in_minutes <- round(c(bd_runtime, shap_runtime, lime_runtime, locModel_runtime,
                                locDiag_runtime, vImp_runtime, pdp_runtime, gPdp_runtime), 4)
 results <- data.frame(methods, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_explanation/runtimes_methods.csv')
+rt_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/runtimes_methods.csv')
 if (overwrite) write.csv(results, rt_filepath)
 
 # TODO: Add methods from inTrees

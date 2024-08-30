@@ -96,6 +96,7 @@ if (overwrite) {
     dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
     dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
+    dir.create(paste0('results/', relative_dir, 'model_explanation/h2o'), showWarnings=FALSE)
 }
 
 #############################################################
@@ -136,14 +137,14 @@ if (file.exists(model_filepath)) {
 #####################
 
 # Specifiy where to save the results
-result_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o')
+result_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o/')
 
 # exp_global_h2o <- h2o.explain(model, test[1:1000,])
 # exp_local_h2o <- h2o.explain(model, test, row_index=sample_idx)
 
 # Variable importance
 # Display and save the variable importance plot 
-if (overwrite) {png(paste0(result_filepath, '_variable_importance.png'))}
+if (overwrite) {png(paste0(result_filepath, 'variable_importance.png'))}
 h2o.varimp_plot(model, num_of_features=num_vars)
 if (overwrite) {dev.off()}
 
@@ -154,18 +155,18 @@ h2o.shap_summary_plot(model, newdata = test, top_n_features = num_features)
 if (overwrite) {dev.off()}
 
 # Display and save the SHAP local explanation plot 
-if (overwrite) {png(paste0(result_filepath, '_shap_local_analysis.png'))}
+if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
 h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx)
 if (overwrite) {dev.off()}
 
 
 # Partial Dependence Plot 
-if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, '_pdp.png'))}
+if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'pdp.png'))}
 h2o.pd_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
 
 
 # Individual Conditional Expectations Plot 
-if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, '_ice.png'))}
+if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'ice.png'))}
 h2o.ice_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
