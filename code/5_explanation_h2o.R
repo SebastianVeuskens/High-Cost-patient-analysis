@@ -142,31 +142,82 @@ result_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o/')
 # exp_global_h2o <- h2o.explain(model, test[1:1000,])
 # exp_local_h2o <- h2o.explain(model, test, row_index=sample_idx)
 
-# Variable importance
+# VARIABLE IMPORTANCE
+
+# Start time measurement 
+varimp_start <- Sys.time()
+
 # Display and save the variable importance plot 
 if (overwrite) {png(paste0(result_filepath, 'variable_importance.png'))}
 h2o.varimp_plot(model, num_of_features=num_vars)
 if (overwrite) {dev.off()}
 
-# SHAP analysis 
+# Stop and report time
+varimp_end <- Sys.time()
+varimp_runtim <- difftime(varimp_end, varimp_start, units='mins')
+print(paste0('Runtime for variable importance plots: ', round(varimp_runtime, 2), ' minutes'))
+
+# SHAP ANALYSIS
+
+# Start time measurement 
+shap_sum_start <- Sys.time()
+
 # Display and save the SHAP summary analysis plot
 if (overwrite) {png(paste0(result_filepath, 'shap_summary_analysis.png'))}
 h2o.shap_summary_plot(model, newdata = test, top_n_features = num_features)
 if (overwrite) {dev.off()}
+
+# Stop and report time
+shap_sum_end <- Sys.time()
+shap_sum_runtim <- difftime(shap_sum_end, shap_sum_start, units='mins')
+print(paste0('Runtime for SHAP summary plots: ', round(shap_sum_runtime, 2), ' minutes'))
+
+# Start time measurement 
+shap_local_start <- Sys.time()
 
 # Display and save the SHAP local explanation plot 
 if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
 h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx)
 if (overwrite) {dev.off()}
 
+# Stop and report time
+shap_local_end <- Sys.time()
+shap_local_runtim <- difftime(shap_local_end, shap_local_start, units='mins')
+print(paste0('Runtime for SHAP local plots: ', round(shap_local_runtime, 2), ' minutes'))
 
-# Partial Dependence Plot 
+
+# PARTIAL DEPENDENCE PLOT 
+
+# Start time measurement 
+pdp_start <- Sys.time()
+
 if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'pdp.png'))}
 h2o.pd_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
 
+# Stop and report time
+pdp_end <- Sys.time()
+pdp_runtim <- difftime(pdp_end, pdp_start, units='mins')
+print(paste0('Runtime for PDP plots: ', round(pdp_runtime, 2), ' minutes'))
 
-# Individual Conditional Expectations Plot 
+
+# INDIVIDUAL CONDITIONAL EXPECTATIONS PLOT 
+
+# Start time measurement 
+ice_start <- Sys.time()
+
 if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'ice.png'))}
 h2o.ice_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
+
+# Stop and report time
+ice_end <- Sys.time()
+ice_runtim <- difftime(ice_end, ice_start, units='mins')
+print(paste0('Runtime for grouped ICE plots: ', round(ice_runtime, 2), ' minutes'))
+
+#  Save the runtimes
+methods <- c('Variable importance', 'SHAP summary', 'SHAP local', 'PDP', 'ICE')
+runtimes_in_minutes <- round(c(varimp_runtime, shap_sum_runtime, shap_local_runtime, pdp_runtime, ice_runtime), 4)
+results <- data.frame(methods, runtimes_in_minutes)
+rt_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o/runtimes_methods.csv')
+if (overwrite) write.csv(results, rt_filepath)
