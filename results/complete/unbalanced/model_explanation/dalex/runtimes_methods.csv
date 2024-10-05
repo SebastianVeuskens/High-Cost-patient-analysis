@@ -1,0 +1,7 @@
+"","methods","runtimes_in_minutes"
+"1","SHAP",2530.436
+"2","LIME",0.1869
+"3","Variable Importance",8.4746
+"4","PDP",0.1112
+"5","ALE",0.105
+"6","Grouped PDP",0.117
