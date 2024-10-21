@@ -12,10 +12,6 @@
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
-# Indicates whether to include High-Cost patients from the last year into analysis 
-filter_hc <- FALSE 
-# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- FALSE 
 # Number of folds to be used for cross-validation 
 nfolds <- 5 
 # Number of the best models to save in the best parameters folder 
@@ -60,10 +56,7 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 
 #### LOAD DATA ####
 
-# Indicate from which relative location to load & save from. Depends on user input. 
-relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
-
-load(paste0('data/', relative_dir, 'train', '.Rdata'))
+load(paste0('data/train.Rdata'))
 
 # Start H2O package
 h2o.init()
@@ -74,9 +67,7 @@ train <- as.h2o(train)
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
-    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_tuning'), showWarnings=FALSE)
+    dir.create('results/model_tuning', showWarnings=FALSE)
 }
 
 ##################################################################
@@ -162,7 +153,7 @@ lr_best_params  <- lapply(lr_best_models, function(model) {c(predictors   = do.c
 lr_model_order <- order(sapply(lr_best_params, function(x) {x['aic']}))
 lr_best_params <- lr_best_params[lr_model_order][1:num_models]
 
-lr_filepath <- paste0('results/', relative_dir, 'model_tuning/logistic_regression_best_parameters')
+lr_filepath <- 'results/model_tuning/logistic_regression_best_parameters'
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(lr_best_params, lr_filepath)   
 
@@ -210,7 +201,7 @@ nn_best_params      <- lapply(nn_best_models, function(model) {c(activation = mo
                                                                  rate       = model@parameters$rate,
                                                                  auc        = model@model$cross_validation_metrics@metrics$AUC)})
 
-nn_filepath <- paste0('results/', relative_dir, 'model_tuning/neural_network_best_parameters')
+nn_filepath <- 'results/model_tuning/neural_network_best_parameters'
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(nn_best_params, nn_filepath)
 
@@ -253,7 +244,7 @@ rf_best_params      <- lapply(rf_best_models, function(model) {c(ntrees = model@
                                                                  mtries = model@parameters$mtries,
                                                                  auc    = model@model$cross_validation_metrics@metrics$AUC)})
 
-rf_filepath <- paste0('results/', relative_dir, 'model_tuning/random_forest_best_parameters')
+rf_filepath <- 'results/model_tuning/random_forest_best_parameters'
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(rf_best_params, rf_filepath)
 
@@ -296,7 +287,7 @@ gbm_best_params      <- lapply(gbm_best_models, function(model) {c(ntrees    = m
                                                                    max_depth = model@parameters$max_depth,
                                                                    auc       = model@model$cross_validation_metrics@metrics$AUC)})
 
-gbm_filepath <- paste0('results/', relative_dir, 'model_tuning/gradient_boosting_machine_best_parameters')
+gbm_filepath <- 'results/model_tuning/gradient_boosting_machine_best_parameters'
 # Use the save_list function from utils.R file 
 if (overwrite) save_list(gbm_best_params, gbm_filepath)
 
@@ -309,5 +300,5 @@ print(paste0('Runtime gradient boosting machine: ', round(gbm_runtime, 2), ' min
 models <- c('logistic regression', 'neural network', 'random forest', 'gradient boosting machine')
 runtimes_in_minutes <- round(c(lr_runtime, nn_runtime, rf_runtime, gbm_runtime), 4)
 results <- data.frame(models, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_tuning/runtimes_model_tuning.csv')
+rt_filepath <- 'results/model_tuning/runtimes_model_tuning.csv'
 if (overwrite) write.csv(results, rt_filepath)
