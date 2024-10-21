@@ -22,7 +22,7 @@ nfolds <- 5
 # The measure to order the models by, default is the area under the curve (AUC)
 measure <- 'auc'
 # Whether you want to save your results (and overwrite the old results) or not
-overwrite <- TRUE
+overwrite <- FALSE 
 # Indicate whether to retrieve performance or validation (one of 'validation' or 'performance')
 scheme <- 'validation'
 #### MODIFY END ####
@@ -241,7 +241,7 @@ models_predictions <- list(lr_predictions$p1, nn_predictions$p1, rf_predictions$
 model_names <- list('Logistic Regression', 'Neural Network', 'Random Forest', 'Gradient Boosting Machine')
 filepath <- paste0('results/', relative_dir, 'model_', scheme)
 
-decision_curves(models_predictions, model_names, newdata=test_data, filepath=filepath,, x=seq(0, 0.3, 0.001))
+decision_curves(models_predictions, model_names, newdata=test_data, filepath=filepath,, x=seq(0, 0.95, 0.001))
 
 ###########################
 #### SELECT BEST MODEL ####
