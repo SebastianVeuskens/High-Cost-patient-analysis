@@ -32,9 +32,8 @@ use_true <- TRUE
 n_features_lime <- 5
 # Specify which feature to investigate better 
 feature_of_interest <- 'Age'
-# TODO: Change this in later evaluations 
-# sample_indices <- c(1, 1467, 2538, 33839)
-sample_indices <- 1467
+# The index of the sample I want to investigate (different indexing in R an Python)
+sample_indices <- 1467 + 1
 # Variable to be used for grouping by grouped PDP plot
 feature_to_group <- 'Total_Costs' # Must be categorical variable 
 #### MODIFY END ####
@@ -163,7 +162,7 @@ train_validate_df$HC_Patient_Next_Year <- as.numeric(train_validate_df$HC_Patien
 #     }
 # }
 
-sample <- test_df[sample_indices,]
+sample <- as.data.frame(test[sample_indices,])
 
 # TODO: Add part for logistic regresion later 
 if (user_model_name == 'logistic regression') {
@@ -202,24 +201,24 @@ print(paste0('Runtime for variable importance plots: ', round(vi_runtime, 2), ' 
 ##############
 
 # Start time measurement 
-# shap_start <- Sys.time()
+shap_start <- Sys.time()
 
-# shap_dalex <- predict_parts(explainer=exp_dalex, 
-#                             new_observation=sample, 
-#                             type='shap',
-#                             B=25 # Number of orderings of explanatory variables to compute the shapley values 
-#                            )
+shap_dalex <- predict_parts(explainer=exp_dalex, 
+                            new_observation=sample, 
+                            type='shap',
+                            B=10 # Number of orderings of explanatory variables to compute the shapley values 
+                           )
 
-# # EXPLANATION: With boxplots, one can see whether effects are reliable.
-# # If, for example, boxplot goes over zero line, effect could also be negative with statistical tolerance 
-# if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
-# plot(shap_dalex, show_boxplots=TRUE)   
-# if (overwrite) {dev.off()}
+# EXPLANATION: With boxplots, one can see whether effects are reliable.
+# If, for example, boxplot goes over zero line, effect could also be negative with statistical tolerance 
+if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
+plot(shap_dalex, show_boxplots=TRUE)   
+if (overwrite) {dev.off()}
 
-# # Stop and report time
-# shap_end <- Sys.time()
-# shap_runtime <- difftime(shap_end, shap_start, units='mins')
-# print(paste0('Runtime for SHAP plots: ', round(shap_runtime, 2), ' minutes'))
+# Stop and report time
+shap_end <- Sys.time()
+shap_runtime <- difftime(shap_end, shap_start, units='mins')
+print(paste0('Runtime for SHAP plots: ', round(shap_runtime, 2), ' minutes'))
 
 
 ##############
@@ -241,7 +240,7 @@ lime_dalex <- predict_surrogate(explainer=exp_dalex,
                                 n_permutations=1000,
                                 type='lime')
 
-if (overwrite) {png(paste0(result_filepath, n_features_lime, '_features_lime_plot.png'), width=1400, height=750)}
+if (overwrite) {png(paste0(result_filepath, n_features_lime, '_features_lime_plot.png'), width=700, height=375)}
 plot(lime_dalex)
 if (overwrite) {dev.off()}
 
@@ -311,21 +310,21 @@ print(paste0('Runtime for LIME plots: ', round(lime_runtime, 2), ' minutes'))
 # CHARACTERISTICS: Depends on the ordering of the variables (can be changed with the variables argument)
 
 # Start time measurement 
-vImp_start <- Sys.time()
+# vImp_start <- Sys.time()
 
-# Variable importance based on RMSE loss 
-set.seed(12345)
-vImp_dalex <- model_parts(explainer=exp_dalex,
-                          loss_function=DALEX::loss_one_minus_auc,
-                          B=1,
-                          type='difference')
+# # Variable importance based on RMSE loss 
+# set.seed(12345)
+# vImp_dalex <- model_parts(explainer=exp_dalex,
+#                           loss_function=DALEX::loss_one_minus_auc,
+#                           B=1,
+#                           type='difference')
 
-plot(vImp_dalex)    
+# plot(vImp_dalex)    
 
-# Stop and report time
-vImp_end <- Sys.time()
-vImp_runtime <- difftime(vImp_end, vImp_start, units='mins')
-print(paste0('Runtime variable importence plots: ', round(vImp_runtime, 2), ' minutes'))
+# # Stop and report time
+# vImp_end <- Sys.time()
+# vImp_runtime <- difftime(vImp_end, vImp_start, units='mins')
+# print(paste0('Runtime variable importence plots: ', round(vImp_runtime, 2), ' minutes'))
 
 
 #############
@@ -340,16 +339,49 @@ print(paste0('Runtime variable importence plots: ', round(vImp_runtime, 2), ' mi
 pdp_start <- Sys.time()
 
 pdp_dalex <- model_profile(explainer=exp_dalex, 
-                           variables=feature_of_interest)
+                        type='partial', 
+                        variables=feature_of_interest)
 
 if (overwrite) {png(paste0(result_filepath, 'pdp_', feature_of_interest, '.png'))}
-plot(pdp_dalex)  
+plot(pdp_dalex)                 
 if (overwrite) {dev.off()}
 
 # Stop and report time
 pdp_end <- Sys.time()
 pdp_runtime <- difftime(pdp_end, pdp_start, units='mins')
 print(paste0('Runtime for PDP plots: ', round(pdp_runtime, 2), ' minutes'))
+
+
+#### ALE plot 
+
+# Start time measurement 
+ale_start <- Sys.time()
+
+ale_dalex <- model_profile(explainer=exp_dalex, 
+                           type='accumulated', 
+                           variables=feature_of_interest,
+                           center=TRUE)
+
+if (overwrite) {png(paste0(result_filepath, 'ale_', feature_of_interest, '.png'))}
+plot(ale_dalex)
+if (overwrite) {dev.off()}
+
+# Stop and report time
+ale_end <- Sys.time()
+ale_runtime <- difftime(ale_end, ale_start, units='mins')
+print(paste0('Runtime for ALE plots: ', round(ale_runtime, 2), ' minutes'))
+
+#### Combined PDP & ALE plot
+pdp_dalex$agr_profiles$'_label_' = 'partial_dependence'
+ale_dalex$agr_profiles$'_label_' = 'accumulated_local'
+
+if (overwrite) {png(paste0(result_filepath, 'pdp_ale_', feature_of_interest, '.png'))}
+plot(pdp_dalex, ale_dalex) +
+# scale_x_continuous(trans='log10', 
+#                     breaks=c(0, 10, 100, 1000, 10000, 100000, 1000000),
+#                     labels=scales::label_currency(suffix='€', prefix='')) + 
+ylim(0, 0.4)
+if (overwrite) {dev.off()}
 
 
 #### Grouped PDP plot 
@@ -371,10 +403,12 @@ gPdp_runtime <- difftime(gPdp_end, gPdp_start, units='mins')
 print(paste0('Runtime for grouped PDP plots: ', round(gPdp_runtime, 2), ' minutes'))
 
 #  Save the runtimes
-methods <- c('Break-down plot', 'SHAP', 'LIME', 'Local Model', 
-             'Local Diagnostics', 'Variable Importance', 'PDP', 'Grouped PDP')
-runtimes_in_minutes <- round(c(bd_runtime, shap_runtime, lime_runtime, locModel_runtime,
-                               locDiag_runtime, vImp_runtime, pdp_runtime, gPdp_runtime), 4)
+methods <- c('SHAP', 'LIME', 'Variable Importance', 'PDP', 'ALE', 'Grouped PDP')
+# methods <- c('SHAP', 'LIME', 'Local Model', 
+#              'Local Diagnostics', 'Variable Importance', 'PDP', 'Grouped PDP')
+runtimes_in_minutes <- round(c(shap_runtime, lime_runtime, vi_runtime, pdp_runtime, ale_runtime, gPdp_runtime), 4)
+# runtimes_in_minutes <- round(c(shap_runtime, lime_runtime, locModel_runtime,
+#                                locDiag_runtime, vImp_runtime, pdp_runtime, gPdp_runtime), 4)
 results <- data.frame(methods, runtimes_in_minutes)
 rt_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/runtimes_methods.csv')
 if (overwrite) write.csv(results, rt_filepath)
