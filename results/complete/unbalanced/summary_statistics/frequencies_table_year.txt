@@ -36,15 +36,17 @@ $`Current HC patient`
                                                        2019     2020    
 [1,] "Average need of care duration "                  0.11     0.132   
 [2,] "Average DMP duration "                           0.7      0.763   
-[3,] "Average total costs "                            1832.696 1860.798
-[4,] "Average inpatient number of diagnoses (years) "  0.639    0.555   
-[5,] "Average outpatient number of diagnoses (years) " 30.493   31.479  
-[6,] "Average number of prescriptions (years) "        7.823    7.672   
+[3,] "Average total costs in the current year"         1832.696 1860.798
+[4,] "Average total costs in the following year"       1965.691 2059.432
+[5,] "Average inpatient number of diagnoses (years) "  0.639    0.555   
+[6,] "Average outpatient number of diagnoses (years) " 30.493   31.479  
+[7,] "Average number of prescriptions (years) "        7.823    7.672   
      2021     p_value
 [1,] 0.151    0      
 [2,] 0.817    0      
 [3,] 1918.211 0.142  
-[4,] 0.562    0      
-[5,] 33.508   0      
-[6,] 7.687    0.17   
+[4,] 2143.968 0.003  
+[5,] 0.562    0      
+[6,] 33.508   0      
+[7,] 7.687    0.17   
 

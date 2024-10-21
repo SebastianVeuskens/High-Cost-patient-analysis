@@ -33,11 +33,20 @@ $`Current HC patient`
 2          1  3054  2162       0
 
 [[6]]
-                                                       0       1       p_value
-[1,] "Average need of care duration "                  0.109   0.55    0      
-[2,] "Average DMP duration "                           0.675   2.387   0      
-[3,] "Average total costs "                            1362.19 11536.3 0      
-[4,] "Average inpatient number of diagnoses (years) "  0.474   2.691   0      
-[5,] "Average outpatient number of diagnoses (years) " 29.596  74.517  0      
-[6,] "Average number of prescriptions (years) "        6.863   24.121  0      
+                                                       0        1       
+[1,] "Average need of care duration "                  0.109    0.55    
+[2,] "Average DMP duration "                           0.675    2.387   
+[3,] "Average total costs in the current year"         1362.19  11536.3 
+[4,] "Average total costs in the following year"       1019.828 21763.36
+[5,] "Average inpatient number of diagnoses (years) "  0.474    2.691   
+[6,] "Average outpatient number of diagnoses (years) " 29.596   74.517  
+[7,] "Average number of prescriptions (years) "        6.863    24.121  
+     p_value
+[1,] 0      
+[2,] 0      
+[3,] 0      
+[4,] 0      
+[5,] 0      
+[6,] 0      
+[7,] 0      
 
