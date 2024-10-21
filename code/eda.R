@@ -15,7 +15,7 @@ setwd('C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling')
 # Indicates whether to include High-Cost patients from the last year into analysis 
 filter_hc <- FALSE 
 # Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- TRUE 
+balance_hc <- FALSE 
 # Number of the best models to save in the best parameters folder 
 num_models <- 2 
 #### MODIFY END ####
@@ -40,17 +40,43 @@ load(paste0('data/', relative_dir, 'train', '.Rdata'))
 load(paste0('data/', relative_dir, 'validate', '.Rdata'))
 load(paste0('data/', relative_dir, 'train_validate', '.Rdata'))
 load(paste0('data/', relative_dir, 'test', '.Rdata'))
+load(paste0('data/', relative_dir, 'data_2019.Rdata'))
+load(paste0('data/', relative_dir, 'data_2020.Rdata'))
+load(paste0('data/', relative_dir, 'data_2021.Rdata'))
 
 # Position of label and variables. Indicate where the features for prediction should start and end in the data.
 label_pos <- 1 
-first_val <- 2
+first_val <- 3
 last_val <- ncol(train)
 
 
 #########################################################################
 ################## EXPLORATION ##########################################
 #########################################################################
-data <- train
+data <- train_validate
+
+column_names <- colnames(data)
+sub('Inpatient_', '', column_names[grep('Inpatient_', column_names)])
+length(column_names[grep('Inpatient_', column_names)])
+length(column_names[grep('Outpatient_', column_names)])
+length(column_names[grep('Prescription_', column_names)])
+
+nrow(data_2019)
+nrow(data_2020)
+nrow(data_2021)
+nrow(train)
+nrow(validate)
+nrow(train_validate)
+nrow(test)
+nrow(train_validate) + nrow(test)
+nrow(data_2019) + nrow(data_2020) + nrow(data_2021)
+
+sum(data_2019$HC_Patient_Next_Year == 1)
+sum(data_2020$HC_Patient_Next_Year == 1)
+sum(data_2021$HC_Patient_Next_Year == 1)
+sum(data_2019$HC_Patient_Next_Year == 0)
+sum(data_2020$HC_Patient_Next_Year == 0)
+sum(data_2021$HC_Patient_Next_Year == 0)
 
 dim(data)
 str(data)
