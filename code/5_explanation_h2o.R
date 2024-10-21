@@ -27,12 +27,15 @@ use_pos <- TRUE
 use_true <- TRUE
 # Number of variables to display in variable importance plot
 num_vars <- 5
-# Number of features to display in SHAP analysis plot
+# Number of features to display in SHAP summary analysis plot
 num_features <- 5
+# Number of features to display in SHAP local analysis plot
+num_features_local <- 10
 # Specify which feature to investigate better 
 feature_of_interest <- 'Age'
 # TODO: Change this in later evaluations 
-sample_idx <- 1
+sample_indices <- c(1, 1467, 2538, 33839)
+sample_idx <- 1467 + 1
 #### MODIFY END ####
 
 #######################
@@ -111,25 +114,32 @@ last_val <- ncol(train_validate)
 # Specify location to save the model 
 model_filepath <- paste0('results/', relative_dir, 'model_validation/model_files_random_forest')
 
-if (file.exists(model_filepath)) {
+# if (file.exists(model_filepath)) {
     model <- h2o.loadModel(model_filepath)
-} else {
-    # Load the best parameters from hyperparameter tuning for the specified model 
-    filename_params <- paste0('random_forest_best_parameters.RData')
-    params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
-    best_params <- params[[1]]
+# } else {
+#     # Load the best parameters from hyperparameter tuning for the specified model 
+#     filename_params <- paste0('random_forest_best_parameters.RData')
+#     params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+#     best_params <- params[[1]]
 
-    # Train the model
-    model <- h2o.randomForest(x            = first_val:last_val, 
-                            y              = label_pos,
-                            training_frame = train_validate, 
-                            nfolds         = nfolds,
-                            seed           = 12345,
-                            ntrees         = as.numeric(rf_best_params[['ntrees']]),
-                            mtries         = as.numeric(rf_best_params[['mtries']]))
+#     # Train the model
+#     model <- h2o.randomForest(x            = first_val:last_val, 
+#                             y              = label_pos,
+#                             training_frame = train_validate, 
+#                             nfolds         = nfolds,
+#                             seed           = 12345,
+#                             ntrees         = as.numeric(rf_best_params[['ntrees']]),
+#                             mtries         = as.numeric(rf_best_params[['mtries']]))
 
-    predictions <- h2o.predict(model, newdata=test)
-}
+# TODO: Delete this part later 
+# predictions <- h2o.predict(model, newdata=test)
+# # }
+
+# models_predictions <- list(predictions$p1)
+# model_names <- list('Random Forest')
+
+# decision_curves(models_predictions, model_names, newdata=test, filepath=result_filepath, x=seq(0, 1, 0.001))
+
 
 
 #####################
@@ -154,7 +164,7 @@ if (overwrite) {dev.off()}
 
 # Stop and report time
 varimp_end <- Sys.time()
-varimp_runtim <- difftime(varimp_end, varimp_start, units='mins')
+varimp_runtime <- difftime(varimp_end, varimp_start, units='mins')
 print(paste0('Runtime for variable importance plots: ', round(varimp_runtime, 2), ' minutes'))
 
 # SHAP ANALYSIS
@@ -169,7 +179,7 @@ if (overwrite) {dev.off()}
 
 # Stop and report time
 shap_sum_end <- Sys.time()
-shap_sum_runtim <- difftime(shap_sum_end, shap_sum_start, units='mins')
+shap_sum_runtime <- difftime(shap_sum_end, shap_sum_start, units='mins')
 print(paste0('Runtime for SHAP summary plots: ', round(shap_sum_runtime, 2), ' minutes'))
 
 # Start time measurement 
@@ -177,12 +187,13 @@ shap_local_start <- Sys.time()
 
 # Display and save the SHAP local explanation plot 
 if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
-h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx)
+# TODO: Check why I have to divide the number of feature by 2 here 
+h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx, top_n_features=num_features_local / 2)
 if (overwrite) {dev.off()}
 
 # Stop and report time
 shap_local_end <- Sys.time()
-shap_local_runtim <- difftime(shap_local_end, shap_local_start, units='mins')
+shap_local_runtime <- difftime(shap_local_end, shap_local_start, units='mins')
 print(paste0('Runtime for SHAP local plots: ', round(shap_local_runtime, 2), ' minutes'))
 
 
@@ -191,13 +202,13 @@ print(paste0('Runtime for SHAP local plots: ', round(shap_local_runtime, 2), ' m
 # Start time measurement 
 pdp_start <- Sys.time()
 
-if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'pdp.png'))}
+if (overwrite) {png(paste0(result_filepath, feature_of_interest, '_pdp.png'))}
 h2o.pd_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
 
 # Stop and report time
 pdp_end <- Sys.time()
-pdp_runtim <- difftime(pdp_end, pdp_start, units='mins')
+pdp_runtime <- difftime(pdp_end, pdp_start, units='mins')
 print(paste0('Runtime for PDP plots: ', round(pdp_runtime, 2), ' minutes'))
 
 
@@ -206,13 +217,13 @@ print(paste0('Runtime for PDP plots: ', round(pdp_runtime, 2), ' minutes'))
 # Start time measurement 
 ice_start <- Sys.time()
 
-if (overwrite) {png(paste0(result_filepath, '_', feature_of_interest, 'ice.png'))}
+if (overwrite) {png(paste0(result_filepath, feature_of_interest, '_ice.png'))}
 h2o.ice_plot(model, newdata = test, column=feature_of_interest)
 if (overwrite) {dev.off()}
 
 # Stop and report time
 ice_end <- Sys.time()
-ice_runtim <- difftime(ice_end, ice_start, units='mins')
+ice_runtime <- difftime(ice_end, ice_start, units='mins')
 print(paste0('Runtime for grouped ICE plots: ', round(ice_runtime, 2), ' minutes'))
 
 #  Save the runtimes
