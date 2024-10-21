@@ -20,7 +20,7 @@ balance_hc <- FALSE
 # Number of the best models to save in the best parameters folder 
 num_models <- 2 
 # Whether you want to save your results (and overwrite the old results) or not
-overwrite <- TRUE
+overwrite <- FALSE
 # Which center function to use for the plot 
 center_func_label <- 'mean'
 #### MODIFY END ####
@@ -208,7 +208,8 @@ frequency_table <- function(data, split_var, decimals=3) {
     , rbind(
       c('Average need of care duration ', avg_and_test(data, 'Need_of_Care_Duration', split_var, decimals))
       , c('Average DMP duration ', avg_and_test(data, 'DMP_Duration', split_var, decimals))
-      , c('Average total costs ', avg_and_test(data, 'Total_Costs', split_var, decimals))
+      , c('Average total costs in the current year', avg_and_test(data, 'Total_Costs', split_var, decimals))
+      , c('Average total costs in the following year', avg_and_test(data, 'Total_Costs_Next_Year', split_var, decimals))
       , c('Average inpatient number of diagnoses (years) ', avg_and_test(data, 'Inpatient_Num_Diagnoses', split_var, decimals))
       , c('Average outpatient number of diagnoses (years) ', avg_and_test(data, 'Outpatient_Num_Diagnoses', split_var, decimals))
       , c('Average number of prescriptions (years) ', avg_and_test(data, 'Prescription_Num_Prescriptions', split_var, decimals))
