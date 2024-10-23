@@ -129,7 +129,6 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
     n <- nrow(newdata) 
 
     # Compute the important measures with this threshold 
-    confusion_matrix <- h2o.confusionMatrix(performance, threshold=threshold)
     auc_h2o          <-  as.numeric(h2o.auc(performance))
     aucpr_h2o       <-  as.numeric(h2o.aucpr(performance))          
     accuracy         <-  as.numeric(h2o.accuracy (performance, threshold))       
@@ -179,11 +178,9 @@ evaluate_model <- function(model, filepath, overwrite, newdata = NULL, target_la
 # @params newdata The test data to evaluate the model on. If NULL, cross validation results are used
 evaluate_r_model <- function(model, filepath, overwrite, newdata, target_label='HC_Patient_Next_Year', cost_label='Total_Costs_Next_Year', B=10000) {
     prediction_probs <- predict(model, newdata, type='prob')[,2]
-    prediction_probs_pos <- prediction_probs[newdata[,target] == 1]
-    prediction_probs_neg <- prediction_probs[newdata[,target] == 0]
 
     gmean <- c()
-    actual <- factor(newdata[,target], levels=c(1, 0))
+    actual <- factor(newdata[,target_label], levels=c(1, 0))
     threshold_range <- seq(0, 1, 0.001)
     for (threshold in threshold_range) {
         predictions <- factor(as.numeric(prediction_probs >= threshold), levels=c(1, 0))
