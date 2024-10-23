@@ -26,7 +26,6 @@ library(boot)       # Bootstrapping library for cost capture confidence interval
 library(ggplot2)    # To visualize the plot 
 library(ggthemes)   # A better style for the plot visualization
 
-# TODO: Check Interal calculation 
 # Compute the confidence interval
 #
 # This function takes a statistics value along with a sample size. Based on  the normal approximation 
@@ -46,17 +45,32 @@ confidence_interval <- function(value, n, confidence = 0.95) {
 }
 
 # Compute the AUC 
-# TODO: Add documentation here 
-compute_auc <- function(prediction_probabilities, newdata, label, confidence = 0.95) {
-    labels <- as.data.frame(newdata[, label])[[1]]
+#
+# This function utilises the ci.cvAUC function to calculate the area under
+# the receiver operating characteristic curve for given predictions and
+# their real outcomes 
+#
+# @params prediction_probabilities The predictions from the model
+# @params newdata The data set that contains the true labels 
+# @params target_label The column that contains the true label
+# @params confidence The confidence level for the confidence interval calculation 
+compute_auc <- function(prediction_probabilities, newdata, target_label, confidence = 0.95) {
+    labels <- as.data.frame(newdata[, target_label])[[1]]
     probabilities <- prediction_probabilities
     auc_info <- ci.cvAUC(probabilities, labels, confidence=confidence)
     return(auc_info)
 }
 
+# Compute the cost capture
+#
+# Compute the amount of HCP costs that was predicted (captured) by the model's predicitons
+#
+# @params prediction_probabilities The predictions from the model
+# @params newdata The data set that contains the true labels 
+# @params target_label The column that contains the true label
+# @params cost_label The column that contains the prospective costs
 compute_cc <- function(prediction_probabilities, newdata, target_label, cost_label) {
     n <- length(prediction_probabilities)
-    # TODO: Check if floor is really appropriate here (changes results only very slightly)
     idx_cc_pred      <- which(prediction_probabilities >= quantile(prediction_probabilities, 0.95))[1:floor(n * 0.05)]
     idx_cc_true      <- which(as.data.frame(newdata)[target_label] == 1)
     cost_capture     <- 100 * sum(newdata[idx_cc_pred, cost_label]) / sum(newdata[idx_cc_true, cost_label])  
@@ -64,23 +78,16 @@ compute_cc <- function(prediction_probabilities, newdata, target_label, cost_lab
 }
 
 # Compute the confidence interval for the cost capture
-# TODO: Add documentation here 
+#
+# Compute the confidence interval via bootstrapping 
+#
+# @params prediction_probabilities The predictions from the model
+# @params newdata The data set that contains the true labels 
+# @params target_label The column that contains the true label
+# @params cost_label The column that contains the prospective costs
+# @params B The number of iterations for the bootstrapping 
+# @params confidence The level of confidence 
 compute_cc_confidence <- function(prediction_probabilities, newdata, target_label, cost_label, B, confidence=0.95) {
-    # TODO: Delete this part later 
-    # alpha <- 1 - confidence
-    # n <- length(prediction_probabilities)
-    # cost_captures <- c()
-    # for (i in 1:B) {
-    #     print(i)
-    #     sample_indeces <- sample(1:n, n, replace=TRUE)
-    #     cur_prediction_probs <- prediction_probabilities[sample_indeces]
-    #     cur_newdata <- newdata[sample_indeces,]
-    #     cur_cost_capture <- compute_cc(cur_prediction_probs, cur_newdata, target_label, cost_label)
-    #     cost_captures <- c(cost_captures, cur_cost_captures)
-    # }
-    # lower <- quantile(cost_captures, alpha / 2)
-    # upper <- quantile(cost_captures, 1 - alpha / 2)
-    # return(c(lower, upper))
     boot_data <- cbind(probs = prediction_probabilities, newdata)
     boot_statistic <- function(boot_data, indices) {
         cur_sample <- boot_data[indices,]
@@ -258,7 +265,6 @@ train_model <- function(model_params, train, first_val, last_val, label_pos) {
     name <- model_params[[1]] 
     params <- model_params[[3]]
     if (name == 'logistic regression') {
-        # TODO: Check if this is the right way to index the predictors 
         indices <- match(strsplit(params[['predictors']], ', ')[[1]], colnames(train))
         model <- h2o.glm(x                                   = indices, 
                          y                                   = label_pos,
@@ -347,7 +353,12 @@ save_lr_coefs <- function(model, filepath) {
     save_list(coefs, paste0(filepath, '_coefficients'))
 }
 
-# TODO: Add documetation 
+# Compute the net benefit
+#
+# This function computes the net benefit according to the decision curve analysis.
+# It weighs and compares the true positive and false negative rates 
+#
+# @params prediction_true The positive model predictions  
 net_benefit <- function(prediction_true, x, n, group) {
     nb <- c()
     for (p_t in x) {

@@ -1,18 +1,17 @@
 #########################################
 #### CREATE SIMPLE TEST MODEL ###########
 #########################################
-# File: 5_explanation_dalex.R
+# File: 4b_explanation_dalex.R
 # Author: Sebastian Benno Veuskens 
 # Date: 2024-07-10
-# Data: 
+# Data: train_validate.Rdata, test.Rdata
 #
-# The purpose of this script is to 
+# The purpose of this script is to create the explanations from the DALEX package.
 
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
-# Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
-# TODO: Change this to NULL at the end 
+# Indicate the model to evaluate. So far, only the random forest model can be loaded in this file. 
 user_model_name <- 'random forest'
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
@@ -28,7 +27,7 @@ use_true <- TRUE
 n_features_lime <- 5
 # Specify which feature to investigate better 
 feature_of_interest <- 'Age'
-# The index of the sample I want to investigate (different indexing in R an Python)
+# The index of the sample to investigate (different indexing in R an Python)
 sample_indices <- 1467 + 1
 # Variable to be used for grouping by grouped PDP plot
 feature_to_group <- 'Total_Costs' # Must be categorical variable 
@@ -129,38 +128,8 @@ train_validate_df <- as.data.frame(train_validate)
 test_df$HC_Patient_Next_Year <- as.numeric(test_df$HC_Patient_Next_Year) - 1
 train_validate_df$HC_Patient_Next_Year <- as.numeric(train_validate_df$HC_Patient_Next_Year) - 1
 
-# true_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 1,]
-# false_pos <- test_df[test_df$HC_Patient_Next_Year == 1 & predictions == 0,]
-# true_neg <- test_df[test_df$HC_Patient_Next_Year == 0 & predictions == 0,]
-# false_neg <- test_df[test_df$HC_Patient_Next_Year == 0 & predictions == 1,]
-
-# nrow(true_pos)
-# nrow(false_pos)
-# nrow(true_neg)
-# nrow(false_neg)
-
-# if (use_pos) {
-#     if (use_true) {
-#         sample <- true_pos[1,]
-#     } else {
-#         sample <- false_pos[1,]
-#     }
-# } else {
-#     if (use_true) {
-#         sample <- true_neg[1,]
-#     } else {
-#         sample <- false_neg[1,]
-#     }
-# }
-
 sample <- as.data.frame(test[sample_indices,])
-
-# TODO: Add part for logistic regresion later 
-if (user_model_name == 'logistic regression') {
-    warning('NOT THE RIGHT PREDICTORS USED') 
-} else {
-    predictors <- setdiff(names(test), c(target, excluded))
-}
+predictors <- setdiff(names(test), c(target, excluded))
 
 exp_dalex <- DALEX::explain(model, data=train_validate_df[,predictors], y=train_validate_df[target])
 
@@ -174,7 +143,6 @@ exp_dalex <- DALEX::explain(model, data=train_validate_df[,predictors], y=train_
 vi_start <- Sys.time()
 
 vi_dalex <- model_parts(explainer=exp_dalex,
-                        # loss_function=loss_cross_entropy,
                         B=1,
                         type='difference')
 
@@ -239,60 +207,6 @@ if (overwrite) {dev.off()}
 lime_end <- Sys.time()
 lime_runtime <- difftime(lime_end, lime_start, units='mins')
 print(paste0('Runtime for LIME plots: ', round(lime_runtime, 2), ' minutes'))
-
-
-#####################
-#### LOCAL MODEL ####
-#####################
-# CHARACTERISTIC: Can be understood and used as method to see what-if,
-# somehow similar to Counterfactual explanations 
-
-# Start time measurement 
-# locModel_start <- Sys.time()
-
-# # Also uses LIME. 
-# locModel_dalex <- predict_surrogate(explainer=exp_dalex,
-#                                     new_observation=sample,
-#                                     size=1000,
-#                                     seed=1,
-#                                     type='localModel')
-
-# plot_interpretable_feature(locModel_dalex, feature_of_interest)                                    
-
-# # Stop and report time
-# locModel_end <- Sys.time()
-# locModel_runtime <- difftime(locModel_end, locModel_start, units='mins')
-# print(paste0('Runtime for local model plots: ', round(locModel_runtime, 2), ' minutes'))
-
-
-################################
-#### LOCAL-DIAGNOSTIC PLOTS ####
-################################
-# CHARACTERISTIC: Not established in literature -> Have to think about whether to use it or not 
-# Helpful to compare to other users and determine model reliability in that certain region. 
-
-# Start time measurement 
-# locDiag_start <- Sys.time()
-
-# neighbors <- 100
-# locDiag_dalex_gen <- DALEX::predict_diagnostics(explainer=exp_dalex,
-#                                          new_observation=sample,
-#                                          neighbors=neighbors)
-
-# plot(locDiag_dalex_gen)
-
-# neighbors <- 10
-# locDiag_dalex_ind <- predict_diagnostics(explainer=exp_dalex,
-#                                          new_observation=sample,
-#                                          neighbors=neighbors,
-#                                          variables=feature_of_interest)
-
-# plot(locDiag_dalex_ind)
-
-# # Stop and report time
-# locDiag_end <- Sys.time()
-# locDiag_runtime <- difftime(locDiag_end, locDiag_start, units='mins')
-# print(paste0('Runtime for local diagnostic plots: ', round(locDiag_runtime, 2), ' minutes'))
 
 
 #############################
@@ -403,5 +317,3 @@ runtimes_in_minutes <- round(c(shap_runtime, lime_runtime, vi_runtime, pdp_runti
 results <- data.frame(methods, runtimes_in_minutes)
 rt_filepath <- 'results/model_explanation/dalex/runtimes_methods.csv'
 if (overwrite) write.csv(results, rt_filepath)
-
-# TODO: Add methods from inTrees

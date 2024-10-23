@@ -29,8 +29,7 @@ num_features <- 5
 num_features_local <- 10
 # Specify which feature to investigate better 
 feature_of_interest <- 'Age'
-# TODO: Change this in later evaluations 
-sample_indices <- c(1, 1467, 2538, 33839)
+# The index of the sample to investigate (different indexing in R an Python)
 sample_idx <- 1467 + 1
 #### MODIFY END ####
 
@@ -39,36 +38,13 @@ sample_idx <- 1467 + 1
 #######################
 
 #### LIBRARIES & SOURCES ####
-# TODO: Check later which libraries I really need here. 
 # INSTALL LIBRARIES 
 # install.packages("dplyr")
 # install.packages("h2o")
-# install.packages('randomForest')
-# install.packages("pdp")               
-# install.packages("shapper")  
-# install.packages("cvAUC")
-# install.packages("PRROC") 
-# install.packages("caret")
-# install.packages('randomForest')
-# install.packages('DALEX')
-# install.packages('DALEXtra')
-# install.packages('lime')
-# install.packages('localModel')
 
 # LOAD LIBRARIES & SOURCES
 library(dplyr)          # To bind two data frames (predictions and labels) together 
 library(h2o)            # The modelling framework 
-# library(randomForest)   # For the random Forest in R
-# library(pdp)            # PDP 
-# library(shapper)        # SHAP 
-# library(cvAUC)          # For the Area Under the Curve (AUC) computation
-# library(PRROC)          # For the ROC and Precision-Recall curve
-# library(caret)          # To compute the confusion matrix
-# library(randomForest)   # To model the R native Random Forest 
-# library(DALEX)          # For model explanations 
-# library(DALEXtra)       # Needed for lime functionality of DALEX 
-# library(lime)           # Needed for lime calculation in DALEX 
-# library(localModel)     # Used for additional local explanation 
 source('code/utils.R')  # Auxiliary functions for simplicity and concise code 
 
 #### LOAD DATA ####
@@ -105,33 +81,7 @@ last_val <- ncol(train_validate)
 # Specify location to save the model 
 model_filepath <- 'results/model_validation/model_files_random_forest'
 
-# TODO: Check what I should delete here 
-# if (file.exists(model_filepath)) {
-    model <- h2o.loadModel(model_filepath)
-# } else {
-#     # Load the best parameters from hyperparameter tuning for the specified model 
-#     filename_params <- paste0('random_forest_best_parameters.RData')
-#     params <- list.load('results/model_tuning/', filename_params)
-#     best_params <- params[[1]]
-
-#     # Train the model
-#     model <- h2o.randomForest(x            = first_val:last_val, 
-#                             y              = label_pos,
-#                             training_frame = train_validate, 
-#                             nfolds         = nfolds,
-#                             seed           = 12345,
-#                             ntrees         = as.numeric(rf_best_params[['ntrees']]),
-#                             mtries         = as.numeric(rf_best_params[['mtries']]))
-
-# TODO: Delete this part later 
-# predictions <- h2o.predict(model, newdata=test)
-# # }
-
-# models_predictions <- list(predictions$p1)
-# model_names <- list('Random Forest')
-
-# decision_curves(models_predictions, model_names, newdata=test, filepath=result_filepath, x=seq(0, 1, 0.001))
-
+model <- h2o.loadModel(model_filepath)
 
 
 #####################
@@ -179,7 +129,6 @@ shap_local_start <- Sys.time()
 
 # Display and save the SHAP local explanation plot 
 if (overwrite) {png(paste0(result_filepath, 'shap_local_analysis.png'))}
-# TODO: Check why I have to divide the number of feature by 2 here 
 h2o.shap_explain_row_plot(model, newdata = test, row_index = sample_idx, top_n_features=num_features_local / 2)
 if (overwrite) {dev.off()}
 
