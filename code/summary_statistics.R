@@ -13,10 +13,6 @@
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/Sebastian's work/OneDrive - OptiMedis AG/Dokumente/Coding/High-Cost-patient-analysis")
-# Indicates whether to include High-Cost patients from the last year into analysis 
-filter_hc <- FALSE 
-# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- FALSE 
 # Number of the best models to save in the best parameters folder 
 num_models <- 2 
 # Whether you want to save your results (and overwrite the old results) or not
@@ -50,20 +46,17 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 
 #### LOAD DATA ####
 
-# Indicate from which relative location to load & save from. Depends on user input. 
-relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
-
 # Use for frequency table creation 
-load(paste0('data/', relative_dir, 'data_2019.Rdata'))
-load(paste0('data/', relative_dir, 'data_2020.Rdata'))
-load(paste0('data/', relative_dir, 'data_2021.Rdata'))
+load('data/data_2019.Rdata')
+load('data/data_2020.Rdata')
+load('data/data_2021.Rdata')
 
 # Use for validation purposes only
-load(paste0('data/', relative_dir, 'data.Rdata'))
-load(paste0('data/', relative_dir, 'train.Rdata'))
-load(paste0('data/', relative_dir, 'validate.Rdata'))
-load(paste0('data/', relative_dir, 'train_validate.Rdata'))
-load(paste0('data/', relative_dir, 'test.Rdata'))
+load('data/data.Rdata')
+load('data/train.Rdata')
+load('data/validate.Rdata')
+load('data/train_validate.Rdata')
+load('data/test.Rdata')
 
 ## Data manipulation
 all_data <- data 
@@ -83,9 +76,7 @@ data$Age_groups <- names(age_code)[match(Age_groups_num, age_code)]
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
-    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'summary_statistics'), showWarnings=FALSE)
+    dir.create('results/summary_statistics', showWarnings=FALSE)
     dir.create(paste0('figures/'), showWarnings=FALSE)
     dir.create(paste0('figures/descriptive_statistics'), showWarnings=FALSE)
 }
@@ -221,8 +212,8 @@ freq_tab_year <- frequency_table(data, 'year')
 freq_tab_hcp <- frequency_table(data, 'HC_Patient_Next_Year')
 
 # Save the frequency tables
-filepath_year <- paste0('results/', relative_dir, 'summary_statistics/frequencies_table_year')
-filepath_hcp <- paste0('results/', relative_dir, 'summary_statistics/frequencies_table_high_cost_patient')
+filepath_year <- 'results/summary_statistics/frequencies_table_year'
+filepath_hcp <- 'results/summary_statistics/frequencies_table_high_cost_patient'
 if (overwrite) save_list(freq_tab_year, filepath_year)
 if (overwrite) save_list(freq_tab_hcp, filepath_hcp)
 

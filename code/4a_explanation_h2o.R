@@ -11,10 +11,6 @@
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
-# Indicates whether to include High-Cost patients from the last year into analysis 
-filter_hc <- FALSE 
-# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- FALSE 
 # Whether you want to save your results (and overwrite the old results) or not
 overwrite <- TRUE
 # Target variable
@@ -77,11 +73,8 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 
 #### LOAD DATA ####
 
-# Indicate from which relative location to load & save from. Depends on user input. 
-relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
-
-load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
-load(paste0('data/', relative_dir, 'test', '.Rdata'))
+load('data/train_validate.Rdata')
+load('data/test.Rdata')
 
 # train_validate$Sex <- as.factor(train_validate$Sex)
 # test$Sex <- as.factor(test$Sex)
@@ -96,10 +89,8 @@ test <- as.h2o(test)
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
-    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_explanation/h2o'), showWarnings=FALSE)
+    dir.create('results/model_explanation', showWarnings=FALSE)
+    dir.create('results/model_explanation/h2o', showWarnings=FALSE)
 }
 
 #############################################################
@@ -112,14 +103,15 @@ first_val <- 3
 last_val <- ncol(train_validate)
 
 # Specify location to save the model 
-model_filepath <- paste0('results/', relative_dir, 'model_validation/model_files_random_forest')
+model_filepath <- 'results/model_validation/model_files_random_forest'
 
+# TODO: Check what I should delete here 
 # if (file.exists(model_filepath)) {
     model <- h2o.loadModel(model_filepath)
 # } else {
 #     # Load the best parameters from hyperparameter tuning for the specified model 
 #     filename_params <- paste0('random_forest_best_parameters.RData')
-#     params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+#     params <- list.load('results/model_tuning/', filename_params)
 #     best_params <- params[[1]]
 
 #     # Train the model
@@ -147,7 +139,7 @@ model_filepath <- paste0('results/', relative_dir, 'model_validation/model_files
 #####################
 
 # Specifiy where to save the results
-result_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o/')
+result_filepath <- 'results/model_explanation/h2o/'
 
 # exp_global_h2o <- h2o.explain(model, test[1:1000,])
 # exp_local_h2o <- h2o.explain(model, test, row_index=sample_idx)
@@ -230,5 +222,5 @@ print(paste0('Runtime for grouped ICE plots: ', round(ice_runtime, 2), ' minutes
 methods <- c('Variable importance', 'SHAP summary', 'SHAP local', 'PDP', 'ICE')
 runtimes_in_minutes <- round(c(varimp_runtime, shap_sum_runtime, shap_local_runtime, pdp_runtime, ice_runtime), 4)
 results <- data.frame(methods, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_explanation/h2o/runtimes_methods.csv')
+rt_filepath <- 'results/model_explanation/h2o/runtimes_methods.csv'
 if (overwrite) write.csv(results, rt_filepath)

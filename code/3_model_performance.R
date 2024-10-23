@@ -13,10 +13,6 @@
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
-# Indicates whether to include High-Cost patients from the last year into analysis 
-filter_hc <- FALSE 
-# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- FALSE 
 # Number of folds to be used for cross-validation 
 nfolds <- 5 
 # The measure to order the models by, default is the area under the curve (AUC)
@@ -45,17 +41,14 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 
 #### LOAD DATA ####
 
-# Indicate from which relative location to load & save from. Depends on user input. 
-relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
-
 if (scheme == 'performance') {
-    load(paste0('data/', relative_dir, 'train',    '.Rdata'))
-    load(paste0('data/', relative_dir, 'validate', '.Rdata'))
+    load('data/train.Rdata')
+    load('data/validate.Rdata')
     train_data <- train
     test_data <- validate
 } else if (scheme == 'validation') {
-    load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
-    load(paste0('data/', relative_dir, 'test', '.Rdata'))
+    load('data/train_validate.Rdata')
+    load('data/test.Rdata')
     train_data <- train_validate
     test_data <- test
 }
@@ -70,9 +63,7 @@ test_data <- as.h2o(test_data)
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
-    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_', scheme), showWarnings=FALSE)
+    dir.create(paste0('results/model_', scheme), showWarnings=FALSE)
 }
 
 ##################################################################
@@ -94,7 +85,7 @@ start_time <- Sys.time()
 
 # Load the best parameters
 lr_filename <- 'logistic_regression_best_parameters.RData'
-lr_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', lr_filename))
+lr_params <- list.load(paste0('results/model_tuning/', lr_filename))
 lr_best_params <- lr_params[[1]]
 
 lr_indices <- match(strsplit(lr_best_params[['predictors']], ', ')[[1]], colnames(train_data))
@@ -110,7 +101,7 @@ lr_model <- h2o.glm(x                = lr_indices,
                     )
 
 # Evaluate the trained model
-lr_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/logistic_regression')
+lr_filepath <- paste0('results/model_', scheme, '/logistic_regression')
 lr_performance <- evaluate_model(lr_model, lr_filepath, overwrite, newdata=test_data)
 
 # Save the coefficients of the model 
@@ -134,7 +125,7 @@ start_time <- Sys.time()
 
 # Load the best parameters
 nn_filename <- 'neural_network_best_parameters.RData'
-nn_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', nn_filename))
+nn_params <- list.load(paste0('results/model_tuning/', nn_filename))
 nn_best_params <- nn_params[[1]]
 
 # Train the model
@@ -148,7 +139,7 @@ nn_model <- h2o.deeplearning(x              = first_val:last_val,
                              rate           = as.numeric(nn_best_params[['rate']]))
 
 # Evaluate the trained model
-nn_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/neural_network')
+nn_filepath <- paste0('results/model_', scheme, '/neural_network')
 nn_performance <- evaluate_model(nn_model, nn_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -169,7 +160,7 @@ start_time <- Sys.time()
 
 # Load the best parameters
 rf_filename <- 'random_forest_best_parameters.RData'
-rf_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', rf_filename))
+rf_params <- list.load(paste0('results/model_tuning/', rf_filename))
 rf_best_params <- rf_params[[1]]
 
 # Train the model
@@ -182,7 +173,7 @@ rf_model <- h2o.randomForest(x              = first_val:last_val,
                              mtries         = as.numeric(rf_best_params[['mtries']]))
 
 # Evaluate the trained model
-rf_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/random_forest')
+rf_filepath <- paste0('results/model_', scheme, '/random_forest')
 rf_performance <- evaluate_model(rf_model, rf_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -203,7 +194,7 @@ start_time <- Sys.time()
 
 # Load the best parameters
 gbm_filename <- 'gradient_boosting_machine_best_parameters.RData'
-gbm_params <- list.load(paste0('results/', relative_dir, 'model_tuning/', gbm_filename))
+gbm_params <- list.load(paste0('results/model_tuning/', gbm_filename))
 gbm_best_params <- gbm_params[[1]]
 
 # Train the model
@@ -216,7 +207,7 @@ gbm_model <- h2o.gbm(x              = first_val:last_val,
                      max_depth      = as.numeric(gbm_best_params[['max_depth']]))
 
 # Evaluate the trained model
-gbm_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/gradient_boosting_machine')
+gbm_filepath <- paste0('results/model_', scheme, '/gradient_boosting_machine')
 gbm_performance <- evaluate_model(gbm_model, gbm_filepath, overwrite, newdata=test_data)
 
 # Get predictions of the model
@@ -231,7 +222,7 @@ print(paste0('Runtime gradient boosting machine: ', round(gbm_runtime, 2), ' min
 models <- c('logistic regression', 'neural network', 'random forest', 'gradient boosting machine')
 runtimes_in_minutes <- round(c(lr_runtime, nn_runtime, rf_runtime, gbm_runtime), 4)
 results <- data.frame(models, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/runtimes_model_', scheme, '.csv')
+rt_filepath <- paste0('results/model_', scheme, '/runtimes_model_', scheme, '.csv')
 if (overwrite) write.csv(results, rt_filepath)
 
 #################################
@@ -239,7 +230,7 @@ if (overwrite) write.csv(results, rt_filepath)
 #################################
 models_predictions <- list(lr_predictions$p1, nn_predictions$p1, rf_predictions$p1, gbm_predictions$p1)
 model_names <- list('Logistic Regression', 'Neural Network', 'Random Forest', 'Gradient Boosting Machine')
-filepath <- paste0('results/', relative_dir, 'model_', scheme)
+filepath <- paste0('results/model_', scheme)
 
 decision_curves(models_predictions, model_names, newdata=test_data, filepath=filepath,, x=seq(0, 0.95, 0.001))
 
@@ -277,9 +268,9 @@ print(best_model)
 
 # Use the save_list function from utils.R file 
 if (overwrite) {
-    om_filepath <- paste0('results/', relative_dir, 'model_', scheme ,'/ordered_models')
-    bm_filepath <- paste0('results/', relative_dir, 'model_', scheme, '/best_model')
-    mf_filepath <- paste0('results/', relative_dir, 'model_', scheme)
+    om_filepath <- paste0('results/model_', scheme ,'/ordered_models')
+    bm_filepath <- paste0('results/model_', scheme, '/best_model')
+    mf_filepath <- paste0('results/model_', scheme)
     save_list(ordered_models, om_filepath)
     save_list(best_model, bm_filepath)
     h2o.saveModel(lr_model, mf_filepath, filename='model_files_linear_regression', force=TRUE)

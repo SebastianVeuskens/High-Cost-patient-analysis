@@ -11,10 +11,6 @@
 #### MODIFY ####
 # Your working directory 
 setwd("C:/Users/s.veuskens/Documents/Sebastian/Projekt Sebastian/modelling")
-# Indicates whether to include High-Cost patients from the last year into analysis 
-filter_hc <- FALSE 
-# Indicates whether to include as many High-Cost patients as not-High-Cost patients 
-balance_hc <- FALSE 
 # Indicate the model to evaluate. Default (NULL) selects the best model from the model selection (see 3_model_selection.R).
 # TODO: Change this to NULL at the end 
 user_model_name <- 'random forest'
@@ -75,11 +71,8 @@ source('code/utils.R')  # Auxiliary functions for simplicity and concise code
 
 #### LOAD DATA ####
 
-# Indicate from which relative location to load & save from. Depends on user input. 
-relative_dir <- paste0(ifelse(filter_hc, 'filtered/', 'complete/'), ifelse(balance_hc, 'balanced/', 'unbalanced/'))
-
-load(paste0('data/', relative_dir, 'train_validate',    '.Rdata'))
-load(paste0('data/', relative_dir, 'test', '.Rdata'))
+load('data/train_validate.Rdata')
+load('data/test.Rdata')
 
 # train_validate$Sex <- as.factor(train_validate$Sex)
 # test$Sex <- as.factor(test$Sex)
@@ -87,21 +80,19 @@ load(paste0('data/', relative_dir, 'test', '.Rdata'))
 #### CREATE FOLDER STRUCTURE ####
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
-    dir.create(paste0('results/', ifelse(filter_hc, 'filtered', 'complete')), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_explanation'), showWarnings=FALSE)
-    dir.create(paste0('results/', relative_dir, 'model_explanation/dalex'), showWarnings=FALSE)
+    dir.create('results/model_explanation', showWarnings=FALSE)
+    dir.create('results/model_explanation/dalex', showWarnings=FALSE)
 }
 
 
 #### LOAD MODEL #### 
 # Specify location to save the model 
 model_name <- gsub(' ', '_', user_model_name) 
-model_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/', model_name)
+model_filepath <- paste0('results/model_explanation/dalex/', model_name)
 
 # Load the best parameters from hyperparameter tuning for the specified model 
 filename_params <- paste0(model_name, '_best_parameters.RData')
-params <- list.load(paste0('results/', relative_dir, 'model_tuning/', filename_params))
+params <- list.load(paste0('results/model_tuning/', filename_params))
 best_params <- params[[1]]
 
 excluded_idx <- which(names(test) == excluded)
@@ -130,7 +121,7 @@ predictions <- as.numeric(prediction_probs >= model$cutoff)
 #######################
 
 # Specifiy where to save the results
-result_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/')
+result_filepath <- paste0('results/model_explanation/dalex/')
 
 # Select samples
 test_df <- as.data.frame(test)
@@ -410,7 +401,7 @@ runtimes_in_minutes <- round(c(shap_runtime, lime_runtime, vi_runtime, pdp_runti
 # runtimes_in_minutes <- round(c(shap_runtime, lime_runtime, locModel_runtime,
 #                                locDiag_runtime, vImp_runtime, pdp_runtime, gPdp_runtime), 4)
 results <- data.frame(methods, runtimes_in_minutes)
-rt_filepath <- paste0('results/', relative_dir, 'model_explanation/dalex/runtimes_methods.csv')
+rt_filepath <- 'results/model_explanation/dalex/runtimes_methods.csv'
 if (overwrite) write.csv(results, rt_filepath)
 
 # TODO: Add methods from inTrees
