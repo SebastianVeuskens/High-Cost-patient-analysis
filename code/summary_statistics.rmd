@@ -1,9 +1,0 @@
----
-title: "Summary Statistics"
-output: github_document
-author: Sebastian Veuskens
----
-
-```{r setup, include=FALSE}
-
-```

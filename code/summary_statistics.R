@@ -77,8 +77,6 @@ data$Age_groups <- names(age_code)[match(Age_groups_num, age_code)]
 if (overwrite) {
     dir.create('results', showWarnings=FALSE)
     dir.create('results/summary_statistics', showWarnings=FALSE)
-    dir.create(paste0('figures/'), showWarnings=FALSE)
-    dir.create(paste0('figures/descriptive_statistics'), showWarnings=FALSE)
 }
 
 #######################
@@ -265,5 +263,5 @@ ggplot(data, aes(x=Total_Costs, fill=HC_Patient_Next_Year)) +
   theme(axis.title=element_text(), legend.position='top')             
 
 # Save plot
-ggsave(filename='figures/descriptive_statistics/total_costs_comparison.png', 
+ggsave(filename='results/summary_statistics/total_costs_comparison.png', 
        width=640/72, height=450/72, dpi=300)
